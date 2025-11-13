@@ -1,7 +1,7 @@
-# demand_forecast_mcp_v6.py
+# demand_forecast_mcp_v8.py
 # ---------------------------------------
 # MCP Agent for Demand Forecasting using XGBoost + Fuzzy & Semantic Search
-# Supports user-defined forecast periods and realistic stock warnings
+# Optimized with FAISS + Query Embedding Cache
 # ---------------------------------------
 
 from fastmcp import FastMCP
@@ -11,6 +11,8 @@ from thefuzz import fuzz, process
 from sentence_transformers import SentenceTransformer
 import psycopg2
 import re
+import numpy as np
+import faiss
 
 # ----------------------------
 # Initialize MCP
@@ -41,27 +43,44 @@ conn = psycopg2.connect(
     password=""
 )
 cur = conn.cursor()
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # 384-dim embeddings
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # fast 384-dim embeddings
 
 # ----------------------------
-# Optional category map for generic queries
+# Preload all item embeddings into memory
 # ----------------------------
-CATEGORY_MAP = {
-    "amoxicillin capsules": ["INV00001"],
-    "painkillers": ["INV00003", "INV00004"],
-    "statins": ["INV00005", "INV00009"],
-    "blood pressure medicine": ["INV00006", "INV00010"],
-    "nitrile gloves": ["INV00001"]
-}
+cur.execute("SELECT inventory_id, item_name, embedding FROM inventory_master")
+inventory_data = cur.fetchall()  # [(id, name, embedding), ...]
+
+inventory_embeddings = []
+inventory_ids = []
+inventory_names = []
+
+for inv_id, name, emb in inventory_data:
+    inventory_ids.append(inv_id)
+    inventory_names.append(name)
+    if isinstance(emb, str):
+        emb = np.array([float(x) for x in emb.strip('[]').split(',')])
+    inventory_embeddings.append(emb.astype('float32'))
+
+inventory_embeddings = np.vstack(inventory_embeddings)  # shape: (N, 384)
+
+# Normalize embeddings for cosine similarity
+faiss.normalize_L2(inventory_embeddings)
+
+# Build FAISS index
+d = inventory_embeddings.shape[1]
+faiss_index = faiss.IndexFlatIP(d)  # Inner Product = cosine similarity if normalized
+faiss_index.add(inventory_embeddings)
+
+# ----------------------------
+# Query embedding cache
+# ----------------------------
+query_cache = {}  # input_str -> inventory_id
 
 # ----------------------------
 # Extract periods from user query
 # ----------------------------
 def extract_periods_from_query(query: str, default: int = 7) -> int:
-    """
-    Extract number of days from user query, e.g., "for 10 days" → 10
-    Supports weeks -> converts to days
-    """
     match = re.search(r'(\d+)\s*(day|days|week|weeks)', query.lower())
     if match:
         num = int(match.group(1))
@@ -82,11 +101,6 @@ def resolve_inventory_ids(input_str: str):
         input_lower = input_str.lower()
         resolved = []
 
-        # 0️⃣ Category map fallback
-        for cat, inv_list in CATEGORY_MAP.items():
-            if cat in input_lower:
-                return [(inv_id, "CategoryMap") for inv_id in inv_list]
-
         # 1️⃣ Exact match on Inventory_ID
         if input_str in historical_df['Inventory_ID'].values:
             resolved.append((input_str, "Exact"))
@@ -100,31 +114,25 @@ def resolve_inventory_ids(input_str: str):
                 resolved.append((row['Inventory_ID'], "Fuzzy"))
             return resolved
 
-        # 3️⃣ Category-level match (contains keyword)
+        # 3️⃣ Substring match on Item_Name
         matched_rows = historical_df[historical_df['Item_Name'].str.lower().str.contains(input_lower)]
         if not matched_rows.empty:
             for _, row in matched_rows.iterrows():
-                resolved.append((row['Inventory_ID'], "Category"))
+                resolved.append((row['Inventory_ID'], "Substring"))
             return resolved
 
-        # 4️⃣ Semantic search via vector DB
-        query_embedding = embedding_model.encode(input_str).tolist()
-        embedding_str = "[" + ",".join([str(x) for x in query_embedding]) + "]"
-        sql = f"""
-            SELECT inventory_id, item_name
-            FROM inventory_master
-            ORDER BY embedding <-> '{embedding_str}'::vector
-            LIMIT 1
-        """
-        cur.execute(sql)
-        result = cur.fetchone()
-        if result:
-            inventory_id, item_name = result
-            resolved.append((inventory_id, "Semantic"))
+        # 4️⃣ Semantic search via FAISS + cache
+        if input_str in query_cache:
+            resolved.append((query_cache[input_str], "Semantic"))
             return resolved
 
-        # 5️⃣ Nothing found
-        return []
+        query_embedding = embedding_model.encode(input_str).astype('float32')
+        faiss.normalize_L2(query_embedding.reshape(1, -1))
+        D, I = faiss_index.search(query_embedding.reshape(1, -1), 1)
+        inventory_id = inventory_ids[I[0][0]]
+        query_cache[input_str] = inventory_id
+        resolved.append((inventory_id, "Semantic"))
+        return resolved
 
     except Exception as e:
         print(f"[resolve_inventory_ids error] {str(e)}")
@@ -139,7 +147,6 @@ def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
         return [{"error": f"No historical data found for Inventory_ID '{item_id}'.", "Search_Method": method}]
 
     last_row = df_item.iloc[-1].copy()
-    # Default fallback values
     defaults = {
         'Closing_Stock': 100,
         'Lead_Time_Days': 3,
@@ -176,7 +183,7 @@ def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
         X_pred = pd.DataFrame([feat])
         y_pred = float(max(0, xgb_model.predict(X_pred)[0]))
 
-        # ✅ Stock warning logic: warn if available stock falls below min_stock_limit
+        # Stock warning logic
         stock_warning = (available_stock - y_pred) < min_stock_limit
 
         preds.append({
@@ -203,9 +210,7 @@ def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
 @mcp.tool
 def predict_demand(Input: str):
     try:
-        # Extract periods from user query
         periods = extract_periods_from_query(Input, default=7)
-
         resolved_list = resolve_inventory_ids(Input)
 
         if not resolved_list:
