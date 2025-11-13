@@ -1,7 +1,7 @@
-# demand_forecast_mcp_v8.py
+# demand_forecast_mcp_v9.py
 # ---------------------------------------
 # MCP Agent for Demand Forecasting using XGBoost + Fuzzy & Semantic Search
-# Optimized with FAISS + Query Embedding Cache
+# Optimized with FAISS + Query Embedding Cache + Safe Matching
 # ---------------------------------------
 
 from fastmcp import FastMCP
@@ -20,7 +20,7 @@ import faiss
 mcp = FastMCP("Demand Forecast Agent 🧠")
 
 # ----------------------------
-# Load trained XGBoost model (JSON)
+# Load trained XGBoost model
 # ----------------------------
 model_path = "models/demand_agent_xgb.json"
 xgb_model = XGBRegressor()
@@ -35,21 +35,18 @@ item_name_list = historical_df['Item_Name'].dropna().str.lower().unique().tolist
 # ----------------------------
 # PostgreSQL Vector DB setup (for semantic search)
 # ----------------------------
+
 conn = psycopg2.connect(
-    host="",
-    port="",
-    dbname="",
-    user="",
-    password=""
+
 )
 cur = conn.cursor()
-embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # fast 384-dim embeddings
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 # ----------------------------
-# Preload all item embeddings into memory
+# Preload all item embeddings into FAISS
 # ----------------------------
 cur.execute("SELECT inventory_id, item_name, embedding FROM inventory_master")
-inventory_data = cur.fetchall()  # [(id, name, embedding), ...]
+inventory_data = cur.fetchall()
 
 inventory_embeddings = []
 inventory_ids = []
@@ -62,20 +59,17 @@ for inv_id, name, emb in inventory_data:
         emb = np.array([float(x) for x in emb.strip('[]').split(',')])
     inventory_embeddings.append(emb.astype('float32'))
 
-inventory_embeddings = np.vstack(inventory_embeddings)  # shape: (N, 384)
-
-# Normalize embeddings for cosine similarity
+inventory_embeddings = np.vstack(inventory_embeddings)
 faiss.normalize_L2(inventory_embeddings)
 
-# Build FAISS index
 d = inventory_embeddings.shape[1]
-faiss_index = faiss.IndexFlatIP(d)  # Inner Product = cosine similarity if normalized
+faiss_index = faiss.IndexFlatIP(d)
 faiss_index.add(inventory_embeddings)
 
 # ----------------------------
-# Query embedding cache
+# Query cache
 # ----------------------------
-query_cache = {}  # input_str -> inventory_id
+query_cache = {}  # input_str -> (inventory_id, similarity)
 
 # ----------------------------
 # Extract periods from user query
@@ -90,47 +84,238 @@ def extract_periods_from_query(query: str, default: int = 7) -> int:
     return default
 
 # ----------------------------
-# Resolve Inventory_ID(s)
+# Resolve inventory IDs safely
 # ----------------------------
-def resolve_inventory_ids(input_str: str):
+
+    """
+    Resolve input string to one or more Inventory IDs.
+    Returns: List of (Inventory_ID, Search_Method) tuples
+    """
+    input_lower = input_str.lower().strip()
+    resolved = []
+
+    try:
+        # 1️⃣ Exact ID match
+        if input_str in historical_df['Inventory_ID'].values:
+            resolved.append((input_str, "Exact"))
+            return resolved
+
+        # 2️⃣ Fuzzy match
+        best_match, score = process.extractOne(input_lower, item_name_list, scorer=fuzz.token_sort_ratio)
+        if score is not None and score >= 85:
+            matched_rows = historical_df[historical_df['Item_Name'].str.lower() == best_match]
+            for _, row in matched_rows.iterrows():
+                resolved.append((row['Inventory_ID'], "Fuzzy"))
+            return resolved
+        else:
+            print(f"[DEBUG] Fuzzy match too weak ({score}) for '{input_str}' → skip")
+
+        # 3️⃣ Substring match
+        matched_rows = historical_df['Item_Name'].str.lower().str.contains(input_lower, na=False)
+        matched_rows = historical_df[matched_rows]
+        if not matched_rows.empty:
+            for _, row in matched_rows.iterrows():
+                resolved.append((row['Inventory_ID'], "Substring"))
+            return resolved
+
+        # 4️⃣ Semantic search with FAISS
+        if input_str in query_cache:
+            inv_id, sim = query_cache[input_str]
+            if sim >= 0.7:
+                resolved.append((inv_id, "Semantic (cached)"))
+                return resolved
+            else:
+                print(f"[DEBUG] Cached semantic sim {sim:.2f} too low for '{input_str}'")
+
+        query_emb = embedding_model.encode(input_str).astype('float32').reshape(1, -1)
+        faiss.normalize_L2(query_emb)
+        D, I = faiss_index.search(query_emb, 1)
+        similarity = float(D[0][0])
+        if similarity < 0.7:
+            print(f"[DEBUG] No good semantic match for '{input_str}' (sim={similarity:.2f})")
+            return []
+
+        inventory_id = inventory_ids[I[0][0]]
+        query_cache[input_str] = (inventory_id, similarity)
+        resolved.append((inventory_id, "Semantic"))
+        return resolved
+
+    except Exception as e:
+        print(f"[resolve_inventory_ids error] {str(e)}")
+        return []
+
     """
     Resolve input string to one or more Inventory IDs.
     Returns: List of (Inventory_ID, Search_Method) tuples
     """
     try:
-        input_lower = input_str.lower()
+        input_lower = input_str.lower().strip()
         resolved = []
 
-        # 1️⃣ Exact match on Inventory_ID
+        # 1️⃣ Exact ID match
         if input_str in historical_df['Inventory_ID'].values:
             resolved.append((input_str, "Exact"))
             return resolved
 
-        # 2️⃣ Fuzzy match on Item_Name
+        # 2️⃣ Fuzzy match (only accept very strong ones)
         best_match, score = process.extractOne(input_lower, item_name_list, scorer=fuzz.token_sort_ratio)
-        if score >= 80:
+        if score is not None and score >= 85:
+            matched_rows = historical_df[historical_df['Item_Name'].str.lower() == best_match]
+            for _, row in matched_rows.iterrows():
+                resolved.append((row['Inventory_ID'], "Fuzzy"))
+            return resolved
+        else:
+            print(f"[DEBUG] Fuzzy match too weak ({score}) for '{input_str}' → skip")
+
+        # 3️⃣ Substring match
+        matched_rows = historical_df[historical_df['Item_Name'].str.lower().str.contains(input_lower, na=False)]
+        if not matched_rows.empty:
+            for _, row in matched_rows.iterrows():
+                resolved.append((row['Inventory_ID'], "Substring"))
+            return resolved
+
+        # 4️⃣ Semantic search with threshold
+        if input_str in query_cache:
+            inv_id, sim = query_cache[input_str]
+            if sim >= 0.7:
+                resolved.append((inv_id, "Semantic (cached)"))
+                return resolved
+            else:
+                print(f"[DEBUG] Cached semantic sim {sim:.2f} too low for '{input_str}'")
+
+        # Compute new embedding
+        query_emb = embedding_model.encode(input_str).astype('float32').reshape(1, -1)
+        faiss.normalize_L2(query_emb)
+        D, I = faiss_index.search(query_emb, 1)
+        similarity = float(D[0][0])
+        if similarity < 0.7:
+            print(f"[DEBUG] No good semantic match for '{input_str}' (sim={similarity:.2f})")
+            return []
+
+        inventory_id = inventory_ids[I[0][0]]
+        query_cache[input_str] = (inventory_id, similarity)
+        resolved.append((inventory_id, "Semantic"))
+        return resolved
+
+    except Exception as e:
+        print(f"[resolve_inventory_ids error] {str(e)}")
+        return []
+
+    try:
+        input_lower = input_str.lower()
+        resolved = []
+
+        # 1️⃣ Exact ID match
+        if input_str in historical_df['Inventory_ID'].values:
+            resolved.append((input_str, "Exact"))
+            return resolved
+
+        # 2️⃣ Fuzzy match
+        best_match, score = process.extractOne(input_lower, item_name_list, scorer=fuzz.token_sort_ratio)
+        if score >= 85:
             matched_rows = historical_df[historical_df['Item_Name'].str.lower() == best_match]
             for _, row in matched_rows.iterrows():
                 resolved.append((row['Inventory_ID'], "Fuzzy"))
             return resolved
 
-        # 3️⃣ Substring match on Item_Name
+        # 3️⃣ Substring match
         matched_rows = historical_df[historical_df['Item_Name'].str.lower().str.contains(input_lower)]
         if not matched_rows.empty:
             for _, row in matched_rows.iterrows():
                 resolved.append((row['Inventory_ID'], "Substring"))
             return resolved
 
-        # 4️⃣ Semantic search via FAISS + cache
+        # 4️⃣ Semantic search with threshold
         if input_str in query_cache:
-            resolved.append((query_cache[input_str], "Semantic"))
+            cached_id, sim = query_cache[input_str]
+            if sim >= 0.7:
+                resolved.append((cached_id, "Semantic"))
+                return resolved
+
+        query_emb = embedding_model.encode(input_str).astype('float32').reshape(1, -1)
+        faiss.normalize_L2(query_emb)
+        D, I = faiss_index.search(query_emb, 1)
+        similarity = float(D[0][0])
+        best_idx = I[0][0]
+
+        if similarity < 0.7:
+            print(f"[DEBUG] No good semantic match for '{input_str}' (similarity={similarity:.2f})")
+            return []
+
+        inventory_id = inventory_ids[best_idx]
+        query_cache[input_str] = (inventory_id, similarity)
+        resolved.append((inventory_id, "Semantic"))
+        return resolved
+
+    except Exception as e:
+        print(f"[resolve_inventory_ids error] {str(e)}")
+        return []
+def resolve_inventory_ids(input_str: str):
+    """
+    Resolve input string to one or more Inventory IDs.
+    Returns: List of (Inventory_ID, Search_Method) tuples.
+    Logic order:
+        1. Exact Inventory_ID match
+        2. Fuzzy match on Item_Name (score >= 85)
+        3. Substring match on Item_Name
+        4. Semantic search with FAISS (cosine similarity >= 0.7)
+    """
+    input_lower = input_str.lower().strip()
+    resolved = []
+
+    try:
+        # -----------------------
+        # 1️⃣ Exact match on Inventory_ID
+        # -----------------------
+        if input_str in historical_df['Inventory_ID'].values:
+            resolved.append((input_str, "Exact"))
             return resolved
 
-        query_embedding = embedding_model.encode(input_str).astype('float32')
-        faiss.normalize_L2(query_embedding.reshape(1, -1))
-        D, I = faiss_index.search(query_embedding.reshape(1, -1), 1)
+        # -----------------------
+        # 2️⃣ Fuzzy match on Item_Name
+        # -----------------------
+        best_match, score = process.extractOne(input_lower, item_name_list, scorer=fuzz.token_sort_ratio)
+        if score is not None and score >= 85:
+            matched_rows = historical_df[historical_df['Item_Name'].str.lower() == best_match]
+            for _, row in matched_rows.iterrows():
+                resolved.append((row['Inventory_ID'], "Fuzzy"))
+            return resolved
+        else:
+            print(f"[DEBUG] Fuzzy match too weak ({score}) for '{input_str}' → skip")
+
+        # -----------------------
+        # 3️⃣ Substring match on Item_Name
+        # -----------------------
+        matched_rows = historical_df[historical_df['Item_Name'].str.lower().str.contains(input_lower, na=False)]
+        if not matched_rows.empty:
+            for _, row in matched_rows.iterrows():
+                resolved.append((row['Inventory_ID'], "Substring"))
+            return resolved
+
+        # -----------------------
+        # 4️⃣ Semantic search with FAISS
+        # -----------------------
+        # Check cache first
+        if input_str in query_cache:
+            inv_id, sim = query_cache[input_str]
+            if sim >= 0.7:
+                resolved.append((inv_id, "Semantic (cached)"))
+                return resolved
+            else:
+                print(f"[DEBUG] Cached semantic similarity {sim:.2f} too low → skip")
+
+        # Compute embedding and search FAISS
+        query_emb = embedding_model.encode(input_str).astype('float32').reshape(1, -1)
+        faiss.normalize_L2(query_emb)
+        D, I = faiss_index.search(query_emb, 1)
+        similarity = float(D[0][0])
+        if similarity < 0.7:
+            print(f"[DEBUG] No semantic match for '{input_str}' (sim={similarity:.2f})")
+            return []  # no match found
+
+        # Good semantic match
         inventory_id = inventory_ids[I[0][0]]
-        query_cache[input_str] = inventory_id
+        query_cache[input_str] = (inventory_id, similarity)
         resolved.append((inventory_id, "Semantic"))
         return resolved
 
@@ -139,12 +324,16 @@ def resolve_inventory_ids(input_str: str):
         return []
 
 # ----------------------------
-# Forecast function with realistic stock warning
+# Forecast function
 # ----------------------------
 def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
     df_item = historical_df[historical_df['Inventory_ID'] == item_id].sort_values('Date').copy()
     if df_item.empty:
-        return [{"error": f"No historical data found for Inventory_ID '{item_id}'.", "Search_Method": method}]
+        print(f"[DEBUG] No historical data for {item_id}")
+        return [{
+            "error": f"No historical data found for Inventory_ID '{item_id}'.",
+            "Search_Method": method
+        }]
 
     last_row = df_item.iloc[-1].copy()
     defaults = {
@@ -183,7 +372,6 @@ def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
         X_pred = pd.DataFrame([feat])
         y_pred = float(max(0, xgb_model.predict(X_pred)[0]))
 
-        # Stock warning logic
         stock_warning = (available_stock - y_pred) < min_stock_limit
 
         preds.append({
@@ -195,7 +383,7 @@ def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
             'Search_Method': method
         })
 
-        # Update lag features and available stock for next day
+        # Update for next day
         for lag in range(7, 1, -1):
             last_row[f'lag_{lag}'] = last_row.get(f'lag_{lag-1}', 0.0)
         last_row['lag_1'] = y_pred
@@ -221,15 +409,8 @@ def predict_demand(Input: str):
 
         all_forecasts = []
         for inv_id, method in resolved_list:
-            try:
-                forecast = forecast_item(inv_id, periods, method)
-                all_forecasts.extend(forecast)
-            except Exception as fe:
-                all_forecasts.append({
-                    "Inventory_ID": inv_id,
-                    "error": f"Forecast failed: {str(fe)}",
-                    "Search_Method": method
-                })
+            forecast = forecast_item(inv_id, periods, method)
+            all_forecasts.extend(forecast)
 
         return all_forecasts
 
