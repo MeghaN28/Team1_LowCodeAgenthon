@@ -20,11 +20,7 @@ mcp = FastMCP("Inventory & Demand MCP 📦🧠")
 # PostgreSQL setup
 # ----------------------------
 conn = psycopg2.connect(
-    host="localhost",
-    port="5432",
-    dbname="vectordb",
-    user="meghanarendrasimha",
-    password="Welcome@123"
+   
 )
 cur = conn.cursor()
 
