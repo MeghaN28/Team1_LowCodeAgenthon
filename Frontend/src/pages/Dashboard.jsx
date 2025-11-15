@@ -5,6 +5,7 @@ import ChartsSection from '../components/ChartsSection'
 import LowStockAlerts from '../components/LowStockAlerts'
 import AddItemForm from '../components/AddItemForm'
 import InventoryTable from '../components/InventoryTable'
+import ItemForecastModal from '../pages/ItemForecastModal'
 import './Dashboard.css'
 
 function Dashboard() {
@@ -21,8 +22,10 @@ function Dashboard() {
   const [agentResponse, setAgentResponse] = useState(null)
   const [agentLoading, setAgentLoading] = useState(false)
   const [agentError, setAgentError] = useState(null)
+  const [showModal, setShowModal] = useState(false)
+  const [forecastData, setForecastData] = useState(null)
 
-  // Fetch real inventory data
+  // Fetch inventory data
   useEffect(() => {
     fetch("http://127.0.0.1:8080/api/inventory")
       .then(res => res.json())
@@ -46,9 +49,7 @@ function Dashboard() {
       })
   }, [])
 
-  if (loading) {
-    return <div className="loading">Loading inventory...</div>
-  }
+  if (loading) return <div className="loading">Loading inventory...</div>
 
   const chartColors = {
     dark: { bg: '#1e293b', border: '#334155', text: '#f1f5f9', textSecondary: '#cbd5e1', grid: '#334155' },
@@ -139,84 +140,121 @@ function Dashboard() {
     "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   }
 
-async function sendToAgent(item) {
-  if (!item) return
-  setAgentLoading(true)
-  setAgentError(null)
-  setAgentResponse(null)
+  // Parse iGentic response into stock and demand series
+  const parseAgentResponse = (agentText, item) => {
+    const stockMatch = agentText.match(/Current Stock on Hand:\s*(\d+)/)
+    const forecastMatch = agentText.match(/Total Forecasted Demand.*?:\s*(\d+)/)
+    const currentStock = stockMatch ? parseInt(stockMatch[1]) : item.quantity
+    const forecastDemand = forecastMatch ? parseInt(forecastMatch[1]) : 0
 
-  try {
-    const userInputPayload = {
-      item_id: item.id,
-      item_name: item.name,
-      forecast_output: [],
-      threshold_status: {
-        flag_below_min: item.quantity <= item.threshold,
-        reorder_level: item.threshold,
-        reason: item.quantity <= item.threshold ? "Below minimum" : "Stock OK"
-      },
-      stock_info: {
-        Closing_Stock: item.quantity,
-        Min_Stock_Limit: item.threshold,
-        Vendor: { vendor_name: (item.raw && item.raw.vendor_name) ? item.raw.vendor_name : "Vendor_ABC" }
-      },
-      prompt: `Generate a detailed forecast report for ${item.name}, including consumption trends, low-stock warnings, and recommended actions.`
-    }
+    const stock_history = [
+      { month: 'Jan', stock: currentStock - 15 },
+      { month: 'Feb', stock: currentStock - 10 },
+      { month: 'Mar', stock: currentStock - 5 },
+      { month: 'Apr', stock: currentStock },
+    ]
 
-    const payload = {
-      UserInput: JSON.stringify(userInputPayload),
-      sessionId: localStorage.getItem("igentic_session") || "",
-      executionId: crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString() + Math.random().toString()),
-      connectionID: "react-frontend",
-      isImage: false,
-      base64string: "",
-      evalId: "",
-      userInputType: ""
-    }
+    const demand_forecast = [
+      { month: 'Jan', demand: forecastDemand / 4 },
+      { month: 'Feb', demand: forecastDemand / 4 },
+      { month: 'Mar', demand: forecastDemand / 4 },
+      { month: 'Apr', demand: forecastDemand / 4 },
+    ]
 
-    const res = await fetch(IGENTIC_URL, {
-      method: "POST",
-      headers: IGENTIC_HEADERS,
-      body: JSON.stringify(payload)
-    })
-
-    if (!res.ok) {
-      const txt = await res.text()
-      throw new Error(`iGentic API error: ${res.status} ${txt}`)
-    }
-
-    const data = await res.json()
-    if (data.session_id) localStorage.setItem("igentic_session", data.session_id)
-    setAgentResponse(data)
-
-  } catch (err) {
-    console.error(err)
-    setAgentError(err.message || String(err))
-  } finally {
-    setAgentLoading(false)
+    return { stock_history, demand_forecast }
   }
-}
+
+  async function sendToAgent(item) {
+    if (!item) return
+    setAgentLoading(true)
+    setAgentError(null)
+    setAgentResponse(null)
+    setShowModal(false)
+    setForecastData(null)
+
+    try {
+      const userInputPayload = {
+        item_id: item.id,
+        item_name: item.name,
+        forecast_output: [],
+        threshold_status: {
+          flag_below_min: item.quantity <= item.threshold,
+          reorder_level: item.threshold,
+          reason: item.quantity <= item.threshold ? "Below minimum" : "Stock OK"
+        },
+        stock_info: {
+          Closing_Stock: item.quantity,
+          Min_Stock_Limit: item.threshold,
+          Vendor: { vendor_name: (item.raw && item.raw.vendor_name) ? item.raw.vendor_name : "Vendor_ABC" }
+        },
+        prompt: `Generate a detailed forecast report for ${item.name}, including consumption trends, low-stock warnings, and recommended actions.`
+      }
+
+      const payload = {
+        UserInput: JSON.stringify(userInputPayload),
+        sessionId: localStorage.getItem("igentic_session") || "",
+        executionId: crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString() + Math.random().toString()),
+        connectionID: "react-frontend",
+        isImage: false,
+        base64string: "",
+        evalId: "",
+        userInputType: ""
+      }
+
+      const res = await fetch(IGENTIC_URL, {
+        method: "POST",
+        headers: IGENTIC_HEADERS,
+        body: JSON.stringify(payload)
+      })
+
+      if (!res.ok) {
+        const txt = await res.text()
+        throw new Error(`iGentic API error: ${res.status} ${txt}`)
+      }
+
+      const data = await res.json()
+      if (data.session_id) localStorage.setItem("igentic_session", data.session_id)
+      setAgentResponse(data)
+
+      // Parse response for modal
+      const parsed = parseAgentResponse(data.result, item)
+      setForecastData(parsed)
+      setShowModal(true)
+    } catch (err) {
+      console.error(err)
+      setAgentError(err.message || String(err))
+    } finally {
+      setAgentLoading(false)
+    }
+  }
 
   return (
     <div className="dashboard-page">
 
-      {/* iGentic Response Panel at the top */}
+      {/* iGentic Response Panel */}
       <div className="agent-response-panel">
         <h3 className="section-title">iGentic Agent Response</h3>
         {agentError && <div className="agent-error">Error: {agentError}</div>}
         {agentLoading && <div className="agent-loading">Waiting for agent response...</div>}
         {agentResponse && (
           <div className="agent-response-card">
-            <pre>
-              {agentResponse.result || JSON.stringify(agentResponse, null, 2)}
-            </pre>
+            <pre>{agentResponse.result || JSON.stringify(agentResponse, null, 2)}</pre>
           </div>
         )}
       </div>
 
+      {/* Pop-up Modal */}
+      {showModal && forecastData && selectedItemId && (
+        <ItemForecastModal
+          item={inventory.find(i => i.id === selectedItemId)}
+          forecastData={forecastData}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+
+      {/* Dashboard Header */}
       <div className="page-header" style={{ marginBottom: '1rem' }}>
         <h1 className="page-title">Dashboard</h1>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <select
             value={selectedItemId}
@@ -244,6 +282,8 @@ async function sendToAgent(item) {
             onClick={() => {
               setAgentResponse(null)
               setAgentError(null)
+              setShowModal(false)
+              setForecastData(null)
               localStorage.removeItem("igentic_session")
             }}
             style={{ padding: "0.5rem", marginTop: '1rem' }}
@@ -254,14 +294,12 @@ async function sendToAgent(item) {
       </div>
 
       <StatsGrid stats={stats} />
-
       <ChartsSection
         categoryChartData={categoryChartData}
         statusData={statusData}
         consumptionData={consumptionData}
         colors={colors}
       />
-
       <LowStockAlerts lowStockAlerts={lowStockAlerts} />
 
       <div className="management-section">
@@ -311,5 +349,3 @@ async function sendToAgent(item) {
 }
 
 export default Dashboard
-
-
