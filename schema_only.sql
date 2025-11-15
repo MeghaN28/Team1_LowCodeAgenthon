@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict EPsTYz57IKv4gNtaicsI8O1c8r9GLHpSV2Qtvvg65MR6db9sL31C5ekcuGZzEeg
+\restrict jtEWfW4qCP4e9SVwbca4vG9KbnCcymsOwYybffIDVTHmW2usm5liqYNUvuahDZw
 
 -- Dumped from database version 18.0 (Homebrew)
 -- Dumped by pg_dump version 18.0 (Homebrew)
@@ -159,7 +159,7 @@ CREATE TABLE public.inventory_master (
     initial_stock integer,
     unit_cost numeric,
     expiry_date date,
-    embedding public.vector(384),
+    embedding double precision[],
     CONSTRAINT inventory_master_item_type_check CHECK ((item_type = ANY (ARRAY['Medication'::text, 'Consumable'::text, 'Equipment'::text])))
 );
 
@@ -282,5 +282,5 @@ ALTER TABLE ONLY public.inventory_master
 -- PostgreSQL database dump complete
 --
 
-\unrestrict EPsTYz57IKv4gNtaicsI8O1c8r9GLHpSV2Qtvvg65MR6db9sL31C5ekcuGZzEeg
+\unrestrict jtEWfW4qCP4e9SVwbca4vG9KbnCcymsOwYybffIDVTHmW2usm5liqYNUvuahDZw
 
