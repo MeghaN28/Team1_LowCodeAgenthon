@@ -1,62 +1,91 @@
-import { Line, Bar } from 'react-chartjs-2'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js'
-import './ItemForecastModal.css'
+import { Bar, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from "chart.js";
+import "./ItemForecastModal.css";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-export default function ItemForecastModal({ item, forecastData, onClose }) {
-  if (!item || !forecastData) return null
+export default function ItemForecastModal({ item, parsed, onClose }) {
+  if (!item || !parsed) return null;
 
-  const { stock_history, demand_forecast } = forecastData
+  const { currentStock, reorderLevel, lowStock, actions } = parsed;
 
-  const stockData = {
-    labels: stock_history.map(s => s.month),
+  const stockBarData = {
+    labels: ["Stock", "Reorder Level"],
     datasets: [
       {
-        label: 'Stock',
-        data: stock_history.map(s => s.stock),
-        backgroundColor: stock_history.some(s => s.stock <= item.threshold) ? 'rgba(255,0,0,0.5)' : 'rgba(16,185,129,0.5)',
-        borderColor: stock_history.some(s => s.stock <= item.threshold) ? 'red' : 'green',
-        borderWidth: 2,
+        label: "Units",
+        data: [currentStock, reorderLevel],
+        backgroundColor: ["rgba(16,185,129,0.6)", "rgba(239,68,68,0.6)"],
+        borderColor: ["green", "red"],
+        borderWidth: 2
       }
     ]
-  }
+  };
 
-  const demandData = {
-    labels: demand_forecast.map(s => s.month),
+  const thresholdPieData = {
+    labels: ["Stock OK", "Low Stock"],
     datasets: [
       {
-        label: 'Forecasted Demand',
-        data: demand_forecast.map(s => s.demand),
-        backgroundColor: 'rgba(59,130,246,0.5)',
-        borderColor: 'blue',
-        borderWidth: 2,
+        data: lowStock ? [0, 1] : [1, 0],
+        backgroundColor: ["rgba(16,185,129,0.6)", "rgba(239,68,68,0.6)"]
       }
     ]
-  }
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <h2>{item.name} - Stock & Demand Forecast</h2>
-        <button className="close-btn" onClick={onClose}>X</button>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2>{item.name} — Inventory Summary</h2>
+        <button className="close-btn" onClick={onClose}>
+          X
+        </button>
 
-        <div className="chart-container">
-          <h4>Stock Levels</h4>
-          <Bar data={stockData} />
-        </div>
-
-        <div className="chart-container">
-          <h4>Demand Forecast</h4>
-          <Line data={demandData} />
-        </div>
-
-        {item.quantity <= item.threshold && (
-          <div className="stock-alert">
-            ⚠️ Stock is below threshold! ({item.quantity} / {item.threshold})
+        {/* Red Alert Banner */}
+        {lowStock && (
+          <div className="low-stock-alert">
+            ⚠️ {currentStock === 0 ? "Item Out of Stock!" : "Low Stock Alert!"}
           </div>
         )}
+
+        {/* Stock Bar */}
+        <div className="chart-container">
+          <h4>Stock vs Threshold</h4>
+          <Bar data={stockBarData} />
+        </div>
+
+        {/* Pie */}
+        <div className="chart-container">
+          <h4>Threshold Status</h4>
+          <Pie data={thresholdPieData} />
+        </div>
+
+        {/* Actions */}
+        <div className="actions-box">
+          <h4>Recommended Actions</h4>
+          <ul>
+            {actions.map((a, idx) => (
+              <li key={idx}>{a}</li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
-  )
+  );
 }

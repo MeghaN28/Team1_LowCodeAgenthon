@@ -7,9 +7,13 @@ import pandas as pd
 inventory_api = Blueprint('inventory_api', __name__)
 
 def get_db_connection():
-    return psycopg2.connect(
-   
-    )
+   return psycopg2.connect(
+    host="localhost",
+    port="5432",
+    dbname="vectordb",
+    user="meghanarendrasimha",
+    password="Welcome@123"
+)
 
 @inventory_api.route('/api/inventory', methods=['GET'])
 def get_inventory():
