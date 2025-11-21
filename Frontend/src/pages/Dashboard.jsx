@@ -35,7 +35,7 @@ function Dashboard() {
             id: item.inventory_id,
             name: item.item_name,
             category: item.item_type || 'Unknown',
-            quantity: item.initial_stock || 0,
+            quantity: item.initial_stock || 0, // updated to match DB
             threshold: item.minimum_required || 0,
             raw: item
           }));
@@ -191,7 +191,7 @@ function Dashboard() {
           stock_info: {
             Closing_Stock: item.quantity,
             Min_Stock_Limit: item.threshold,
-            Vendor: { vendor_name: (item.raw && item.raw.vendor_name) ? item.raw.vendor_name : "Vendor_ABC" }
+            Vendor: { vendor_name: item.raw.vendor_name || "Vendor_ABC" }
           },
           prompt: `Generate a detailed forecast report for ${item.name}, including consumption trends, low-stock warnings, and recommended actions.`
         }),
@@ -265,7 +265,9 @@ function Dashboard() {
           >
             <option value="">-- Select Inventory Item --</option>
             {inventory.map(item => (
-              <option key={item.id} value={item.id}>{item.name}</option>
+              <option key={item.id} value={item.id}>
+                {item.name} {item.quantity <= item.threshold ? '⚠️ Low Stock' : ''}
+              </option>
             ))}
           </select>
 

@@ -36,66 +36,78 @@ function Chatbot() {
     "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   }
 
-  const sendToAgent = async (text) => {
-    setIsProcessing(true)
-    setAgentError(null)
+const sendToAgent = async (text) => {
+  setIsProcessing(true);
+  setAgentError(null);
 
-    const userMessage = {
-      id: messages.length + 1,
-      text,
-      sender: 'user',
-      timestamp: new Date()
-    }
-    setMessages(prev => [...prev, userMessage])
+  const userMessage = {
+    id: messages.length + 1,
+    text,
+    sender: 'user',
+    timestamp: new Date()
+  };
+  setMessages(prev => [...prev, userMessage]);
 
-    const payload = {
-      UserInput: JSON.stringify({ prompt: text }),
-      sessionId: localStorage.getItem("igentic_chat_session") || "",
-      executionId: crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString() + Math.random().toString()),
-      connectionID: "react-chatbot",
-      isImage: false,
-      base64string: "",
-      evalId: "",
-      userInputType: "text"
-    }
-
-    try {
-      const res = await fetch(IGENTIC_URL, {
-        method: 'POST',
-        headers: IGENTIC_HEADERS,
-        body: JSON.stringify(payload)
-      })
-
-      if (!res.ok) {
-        const txt = await res.text()
-        throw new Error(`iGentic API error: ${res.status} ${txt}`)
-      }
-
-      const data = await res.json()
-      if (data.session_id) localStorage.setItem("igentic_chat_session", data.session_id)
-
-      const botMessage = {
-        id: messages.length + 2,
-        text: data.result || JSON.stringify(data, null, 2),
-        sender: 'bot',
-        timestamp: new Date()
-      }
-
-      setMessages(prev => [...prev, botMessage])
-    } catch (err) {
-      console.error(err)
-      setAgentError(err.message || String(err))
-      const botMessage = {
-        id: messages.length + 2,
-        text: `Error: ${err.message || "Something went wrong with the agent."}`,
-        sender: 'bot',
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, botMessage])
-    } finally {
-      setIsProcessing(false)
-    }
+  // ----------------------------
+  // Force a fresh session for stock queries
+  // ----------------------------
+  let sessionIdToUse = "";
+  if (!text.toLowerCase().includes("stock") && localStorage.getItem("igentic_chat_session")) {
+    // For non-stock queries, you can keep old session
+    sessionIdToUse = localStorage.getItem("igentic_chat_session");
   }
+  // For stock queries (or critical data), sessionId is empty to force fresh DB fetch
+
+  const payload = {
+    UserInput: JSON.stringify({ prompt: text }),
+    sessionId: sessionIdToUse,
+    executionId: crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString() + Math.random().toString()),
+    connectionID: "react-chatbot",
+    isImage: false,
+    base64string: "",
+    evalId: "",
+    userInputType: "text"
+  };
+
+  try {
+    const res = await fetch(IGENTIC_URL, {
+      method: 'POST',
+      headers: IGENTIC_HEADERS,
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`iGentic API error: ${res.status} ${txt}`);
+    }
+
+    const data = await res.json();
+
+    // Always store session if returned by MCP
+    if (data.session_id) localStorage.setItem("igentic_chat_session", data.session_id);
+
+    const botMessage = {
+      id: messages.length + 2,
+      text: data.result || JSON.stringify(data, null, 2),
+      sender: 'bot',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, botMessage]);
+  } catch (err) {
+    console.error(err);
+    setAgentError(err.message || String(err));
+    const botMessage = {
+      id: messages.length + 2,
+      text: `Error: ${err.message || "Something went wrong with the agent."}`,
+      sender: 'bot',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, botMessage]);
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   const handleSendMessage = (text = inputText) => {
     if (!text.trim() || isProcessing) return
@@ -104,7 +116,7 @@ function Chatbot() {
   }
 
   // -------------------------
-  // Voice input (same as before)
+  // Voice input
   // -------------------------
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
