@@ -29,24 +29,23 @@ function Chatbot() {
     "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   }
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  // Scroll messages to bottom
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   // -------------------------
-  // Send message to main agent
+  // Send message to agent
   // -------------------------
-  const sendToAgent = async (text) => {
+  const sendToAgent = async (text, isControlCommand = false) => {
+    if (!text?.trim()) return
     setIsProcessing(true)
     setAgentError(null)
 
+    // Add user message
     const userMessage = { id: messages.length + 1, text, sender: 'user', timestamp: new Date() }
     setMessages(prev => [...prev, userMessage])
 
-    let sessionIdToUse = ""
-    if (!text.toLowerCase().includes("stock") && localStorage.getItem("igentic_chat_session")) {
-      sessionIdToUse = localStorage.getItem("igentic_chat_session")
-    }
+    // Load last session for context
+    let sessionIdToUse = localStorage.getItem("igentic_chat_session") || ""
 
     const payload = {
       UserInput: JSON.stringify({ prompt: text }),
@@ -56,7 +55,7 @@ function Chatbot() {
       isImage: false,
       base64string: "",
       evalId: "",
-      userInputType: "text"
+      userInputType: isControlCommand ? "control" : "text"
     }
 
     try {
@@ -65,8 +64,11 @@ function Chatbot() {
       const data = await res.json()
       if (data.session_id) localStorage.setItem("igentic_chat_session", data.session_id)
 
-      const botMessageText = data.result || JSON.stringify(data, null, 2)
+      const botMessageText = data.result || "No response from agent."
       setMessages(prev => [...prev, { id: prev.length + 1, text: botMessageText, sender: 'bot', timestamp: new Date() }])
+
+      // Save last bot response for "continue"
+      localStorage.setItem("last_bot_message", botMessageText)
 
       // Play TTS
       playBotAudio(botMessageText)
@@ -102,11 +104,18 @@ function Chatbot() {
       const transcript = event.results[0][0].transcript.toLowerCase().trim()
       setInputText(transcript)
 
-      // Check for TTS control commands first
+      // Check for stop/pause
       if (transcript.includes("stop") || transcript.includes("hold on") || transcript.includes("pause")) {
         stopAudio()
         setMessages(prev => [...prev, { id: prev.length + 1, text: "Audio stopped by user", sender: 'bot', timestamp: new Date() }])
-        sendControlToAgent(transcript, lastBotMessage())
+        sendControlToAgent(transcript, localStorage.getItem("last_bot_message") || "")
+        return
+      }
+
+      // Check for continue
+      if (transcript.includes("continue") || transcript.includes("resume")) {
+        const lastMessage = localStorage.getItem("last_bot_message")
+        if (lastMessage) sendToAgent(`Continue previous conversation: ${lastMessage}`, true)
         return
       }
 
@@ -128,31 +137,21 @@ function Chatbot() {
   // TTS playback
   // -------------------------
   const playBotAudio = async (text) => {
-  try {
-    stopAudio()
-    const res = await fetch("http://localhost:8080/api/tts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    })
-
-    if (!res.ok) {
-      const txt = await res.text()
-      console.error("TTS backend error:", txt)
-      return
-    }
-
-    const audioBlob = await res.blob()
-    const audioUrl = URL.createObjectURL(audioBlob)
-    const audio = new Audio(audioUrl)
-    audioRef.current = audio
-    audio.play().catch(err => console.warn("Autoplay blocked", err))
-
-  } catch (err) {
-    console.error("TTS error:", err)
+    try {
+      stopAudio()
+      const res = await fetch("http://localhost:8080/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      })
+      if (!res.ok) { console.error("TTS backend error:", await res.text()); return }
+      const audioBlob = await res.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+      audio.play().catch(err => console.warn("Autoplay blocked", err))
+    } catch (err) { console.error("TTS error:", err) }
   }
-}
-
 
   const stopAudio = () => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; audioRef.current = null }
@@ -172,13 +171,6 @@ function Chatbot() {
       const data = await res.json()
       console.log("Control agent response:", data)
     } catch (err) { console.error("Control command error:", err) }
-  }
-
-  const lastBotMessage = () => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].sender === 'bot') return messages[i].text
-    }
-    return ""
   }
 
   const handleKeyPress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() } }
