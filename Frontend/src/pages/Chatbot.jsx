@@ -1,8 +1,11 @@
+// Chatbot.jsx
 import { useState, useRef, useEffect } from 'react'
 import WelcomeScreen from '../components/WelcomeScreen'
 import MessageList from '../components/MessageList'
 import ChatInput from '../components/ChatInput'
 import './Chatbot.css'
+
+const BACKEND_URL = "http://localhost:8080"  // Flask backend URL
 
 function Chatbot() {
   const [messages, setMessages] = useState([
@@ -30,84 +33,67 @@ function Chatbot() {
   const AGENT_ID = "f800f4c2-eb25-467c-942b-b81de85e2f1c"
   const IGENTIC_ENDPOINT_BASE = "https://container-hackathon-sk.salmonpebble-59bd07ab.eastus.azurecontainerapps.io/api/iGenticAutonomousAgent/Executor"
   const IGENTIC_URL = `${IGENTIC_ENDPOINT_BASE}/${AGENT_ID}`
-
   const IGENTIC_HEADERS = {
     "Content-Type": "application/json",
     "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   }
 
-const sendToAgent = async (text) => {
-  setIsProcessing(true);
-  setAgentError(null);
+  // -------------------------
+  // Send message to agent
+  // -------------------------
+  const sendToAgent = async (text) => {
+    setIsProcessing(true);
+    setAgentError(null);
 
-  const userMessage = {
-    id: messages.length + 1,
-    text,
-    sender: 'user',
-    timestamp: new Date()
-  };
-  setMessages(prev => [...prev, userMessage]);
+    const userMessage = { id: messages.length + 1, text, sender: 'user', timestamp: new Date() };
+    setMessages(prev => [...prev, userMessage]);
 
-  // ----------------------------
-  // Force a fresh session for stock queries
-  // ----------------------------
-  let sessionIdToUse = "";
-  if (!text.toLowerCase().includes("stock") && localStorage.getItem("igentic_chat_session")) {
-    // For non-stock queries, you can keep old session
-    sessionIdToUse = localStorage.getItem("igentic_chat_session");
-  }
-  // For stock queries (or critical data), sessionId is empty to force fresh DB fetch
-
-  const payload = {
-    UserInput: JSON.stringify({ prompt: text }),
-    sessionId: sessionIdToUse,
-    executionId: crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString() + Math.random().toString()),
-    connectionID: "react-chatbot",
-    isImage: false,
-    base64string: "",
-    evalId: "",
-    userInputType: "text"
-  };
-
-  try {
-    const res = await fetch(IGENTIC_URL, {
-      method: 'POST',
-      headers: IGENTIC_HEADERS,
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(`iGentic API error: ${res.status} ${txt}`);
+    let sessionIdToUse = "";
+    if (!text.toLowerCase().includes("stock") && localStorage.getItem("igentic_chat_session")) {
+      sessionIdToUse = localStorage.getItem("igentic_chat_session");
     }
 
-    const data = await res.json();
-
-    // Always store session if returned by MCP
-    if (data.session_id) localStorage.setItem("igentic_chat_session", data.session_id);
-
-    const botMessage = {
-      id: messages.length + 2,
-      text: data.result || JSON.stringify(data, null, 2),
-      sender: 'bot',
-      timestamp: new Date()
+    const payload = {
+      UserInput: JSON.stringify({ prompt: text }),
+      sessionId: sessionIdToUse,
+      executionId: crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString() + Math.random().toString()),
+      connectionID: "react-chatbot",
+      isImage: false,
+      base64string: "",
+      evalId: "",
+      userInputType: "text"
     };
 
-    setMessages(prev => [...prev, botMessage]);
-  } catch (err) {
-    console.error(err);
-    setAgentError(err.message || String(err));
-    const botMessage = {
-      id: messages.length + 2,
-      text: `Error: ${err.message || "Something went wrong with the agent."}`,
-      sender: 'bot',
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, botMessage]);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+    try {
+      const res = await fetch(IGENTIC_URL, {
+        method: 'POST',
+        headers: IGENTIC_HEADERS,
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`iGentic API error: ${res.status} ${txt}`);
+      }
+
+      const data = await res.json();
+      if (data.session_id) localStorage.setItem("igentic_chat_session", data.session_id);
+
+      const botMessageText = data.result || "Agent did not return a response.";
+      const botMessage = { id: messages.length + 2, text: botMessageText, sender: 'bot', timestamp: new Date() };
+      setMessages(prev => [...prev, botMessage]);
+
+      // Convert bot text to audio and play automatically
+      playBotAudio(botMessageText);
+
+    } catch (err) {
+      console.error(err);
+      setAgentError(err.message || String(err));
+      setMessages(prev => [...prev, { id: prev.length + 1, text: `Error: ${err.message || "Something went wrong with the agent."}`, sender: 'bot', timestamp: new Date() }]);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleSendMessage = (text = inputText) => {
     if (!text.trim() || isProcessing) return
@@ -116,43 +102,72 @@ const sendToAgent = async (text) => {
   }
 
   // -------------------------
-  // Voice input
+  // Browser STT
   // -------------------------
   useEffect(() => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.continuous = false
-      recognitionRef.current.interimResults = false
-      recognitionRef.current.lang = 'en-US'
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) { recognitionRef.current = null; return }
 
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript
-        setInputText(transcript)
-        setIsListening(false)
-        setTimeout(() => handleSendMessage(transcript), 100)
-      }
+    const recog = new SpeechRecognition()
+    recog.continuous = false
+    recog.interimResults = false
+    recog.lang = 'en-US'
 
-      recognitionRef.current.onerror = () => setIsListening(false)
-      recognitionRef.current.onend = () => setIsListening(false)
+    recog.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      setInputText(transcript)
+      setTimeout(() => handleSendMessage(transcript), 150)
     }
+
+    recog.onerror = (e) => { console.error("SpeechRecognition error", e); setIsListening(false) }
+    recog.onend = () => { setIsListening(false) }
+
+    recognitionRef.current = recog
   }, [])
 
-  const handleVoiceInput = () => {
+  const toggleVoiceInput = () => {
     if (!recognitionRef.current) {
-      alert('Speech recognition is not supported in your browser.')
+      alert("Speech recognition not available in this browser. Try Chrome or Safari.")
       return
     }
-    if (isListening) recognitionRef.current.stop()
-    else recognitionRef.current.start()
-    setIsListening(!isListening)
+    if (isListening) { recognitionRef.current.stop(); setIsListening(false) }
+    else { try { recognitionRef.current.start(); setIsListening(true) } catch(e) { console.error("start error", e); setIsListening(false) } }
   }
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  // -------------------------
+  // Play TTS audio from backend
+  // -------------------------
+  const playBotAudio = async (text) => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      if (!res.ok) {
+        console.error("TTS backend error:", await res.text());
+        return;
+      }
+
+      const audioBlob = await res.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.autoplay = true;
+      audio.play().catch(err => {
+        console.warn("Autoplay blocked. Will play after next user interaction.", err);
+      });
+
+    } catch (err) {
+      console.error("TTS error:", err);
     }
+  };
+
+  // -------------------------
+  // UI handlers
+  // -------------------------
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() }
   }
 
   const quickQuestions = [
@@ -171,23 +186,16 @@ const sendToAgent = async (text) => {
     <div className="chatbot-page-chatgpt">
       <div className="chat-container-chatgpt">
         {messages.length === 1 && (
-          <WelcomeScreen
-            quickQuestions={quickQuestions}
-            handleQuickQuestion={handleQuickQuestion}
-          />
+          <WelcomeScreen quickQuestions={quickQuestions} handleQuickQuestion={handleQuickQuestion} />
         )}
 
-        <MessageList
-          messages={messages}
-          isProcessing={isProcessing}
-          messagesEndRef={messagesEndRef}
-        />
+        <MessageList messages={messages} isProcessing={isProcessing} messagesEndRef={messagesEndRef} />
 
         <ChatInput
           inputText={inputText}
           setInputText={setInputText}
           handleKeyPress={handleKeyPress}
-          handleVoiceInput={handleVoiceInput}
+          handleVoiceInput={toggleVoiceInput}
           isListening={isListening}
           handleSendMessage={handleSendMessage}
           isProcessing={isProcessing}
