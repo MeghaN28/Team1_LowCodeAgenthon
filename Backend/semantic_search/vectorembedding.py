@@ -1,29 +1,39 @@
 from sentence_transformers import SentenceTransformer
 import psycopg2
-import numpy as np
 
-# Load model
-model = SentenceTransformer('all-MiniLM-L6-v2')  # produces 384-dim embeddings
+# Load 128-dimensional model
+model = SentenceTransformer('paraphrase-MiniLM-L3-v2')
 
+# Connect to PostgreSQL
 conn = psycopg2.connect(
-    host="",        # replace with your host
-    port="",             # replace with your port
-    dbname="",
-    user="",
-    password="" # replace with your password
+    host="localhost",
+    port="5432",
+    dbname="inventory_database",
+    user="meghanarendrasimha",
+    password="Welcome@123"
 )
 cur = conn.cursor()
 
-# Fetch items
-cur.execute("SELECT inventory_id, item_name FROM inventory_master")
-items = cur.fetchall()
+# Fetch inventory items
+cur.execute("SELECT inventory_id, item_name, item_type FROM inventory_master")
+rows = cur.fetchall()
 
-for inventory_id, item_name in items:
-    emb = model.encode(item_name).tolist()  # list of floats
-    emb_str = "[" + ",".join(map(str, emb)) + "]"
-    cur.execute("UPDATE inventory_master SET embedding=%s WHERE inventory_id=%s", (emb_str, inventory_id))
+for inv_id, name, type_ in rows:
+    text = f"{name} {type_ or ''}".strip()
+    emb = model.encode(text)
+
+    # Safety check for dimension
+    if len(emb) != 384:
+        print(f"Skipping {text} due to dimension mismatch: {len(emb)}")
+        continue
+
+    # Use list directly; psycopg2 + pgvector accepts Python list
+    cur.execute(
+        "UPDATE inventory_master SET embedding = %s WHERE inventory_id = %s",
+        (emb.tolist(), inv_id)
+    )
 
 conn.commit()
 cur.close()
 conn.close()
-print("✅ Embeddings saved for all items")
+print("Embeddings updated successfully.")
