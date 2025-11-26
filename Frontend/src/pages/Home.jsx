@@ -25,18 +25,18 @@ function Home() {
     return 'in-stock'
   }
 
-  // Fetch real inventory data from backend API
+  // Fetch inventory
   useEffect(() => {
-    fetch("http://127.0.0.1:8080/api/inventory") // Replace with your API port
+    fetch("http://127.0.0.1:8080/api/inventory")
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           const formatted = data.items.map(item => ({
             id: item.inventory_id,
             name: item.item_name,
-            category: item.item_type,
-            quantity: item.initial_stock || 0,
-            threshold: item.minimum_required || 0
+            category: item.item_type || 'Unknown',
+            quantity: item.current_stock || 0,
+            threshold: item.min_stock || 0
           }))
           setInventory(formatted)
         }
@@ -48,6 +48,7 @@ function Home() {
       })
   }, [])
 
+  // Filter and sort inventory for search & stock status selection
   const filteredAndSortedInventory = useMemo(() => {
     let filtered = inventory.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -73,6 +74,18 @@ function Home() {
       }
     })
 
+    // Apply uniqueness only if not 'All'
+    if (selectedStockStatus !== 'All') {
+      const seen = new Set()
+      filtered = filtered.filter(item => {
+        if (!seen.has(item.name)) {
+          seen.add(item.name)
+          return true
+        }
+        return false
+      })
+    }
+
     return filtered
   }, [inventory, searchTerm, selectedStockStatus, sortBy])
 
@@ -82,7 +95,7 @@ function Home() {
     'out-of-stock': '#ef4444'
   }
 
-  // Calculate stats
+  // Stats: always use full inventory
   const stats = {
     total: inventory.length,
     inStock: inventory.filter(item => getStockStatus(item) === 'in-stock').length,
@@ -90,9 +103,7 @@ function Home() {
     outOfStock: inventory.filter(item => getStockStatus(item) === 'out-of-stock').length
   }
 
-  if (loading) {
-    return <div className="loading">Loading inventory...</div>
-  }
+  if (loading) return <div className="loading">Loading inventory...</div>
 
   return (
     <div className="home-page">
