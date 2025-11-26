@@ -11,117 +11,127 @@ This system helps healthcare facilities efficiently manage medication and supply
 ## Key Goals
 - Maintain real-time inventory levels and generate alerts for low stock.
 - Analyze historical consumption data and forecast future demand.
-- Automate purchase orders with human-in-the-loop approval.
-- Visualize inventory, demand, and forecasts in an interactive dashboard.
+# Supply Chain - Warehousing (Medical Inventory Management)
 
----
+Project repository for an inventory management system aimed at healthcare facilities. It provides stock monitoring, demand forecasting, semantic search for inventory resolution, and automated purchase-order assistance with a responsive React dashboard.
 
-## Architecture Overview
-- **Frontend (React):** Dashboard with **React Charts** for stock and forecast visualization, human approval UI for purchase orders.
-- **Backend (Python - Flask / FastAPI):** MCP orchestrator, API endpoints, semantic search using embeddings, orchestration of Stock, Demand, and Reorder agents.
-- **AI Agents:**
-  1. **Stock Level Monitor:** Tracks inventory, generates low-stock alerts, summarizes inventory in CSV and charts.
-- **Demand Forecaster:** Analyzes historical consumption trends and seasonal patterns; generates time-series forecasts.
-  3. **Reorder Automator:** Generates purchase orders based on low-stock and forecast, supports human approval, updates inventory and order tracking.
-- **Database (PostgreSQL):** Stores historical consumption, stock, vendor data; tables include `inventory_master`, `consumption`, `finance`, `vendor_master`, `inventory_department_mapping`.
-## Medical Inventory Management System
+## Overview
 
-**Project Name:** Supply Chain - Warehousing
+- Real-time stock tracking and low-stock alerts
+- Demand forecasting using historical trend analysis and semantic-search-assisted resolution
+- Automated purchase-order generation with human-in-the-loop approval
+- React dashboard with charts and conversational chatbot interface
 
-**Agent Name:** Inventory Management Agent / Medical Inventory Management Agent
+## Repository layout
 
-**Team:** Team 1 - Supply Soul
+- `Backend/` — Flask backend, MCP orchestrator, semantic-search utilities, TTS/STT endpoints, helper scripts
+- `Frontend/` — React + Vite frontend application (dashboard, chatbot, inventory views)
+- `schema_only.sql`, `full_dump.sql` — (database schema and optional data dumps)
 
-**Contributors:** Megha Narendra Simha, Poorrnima Vetrivelan, Nada Feteiha
+## Quick Start (developer)
 
-Overview
---------
-This repository implements an inventory management system for healthcare facilities. It provides:
-- real-time stock tracking and low-stock alerts
-- demand forecasting using historical trend analysis and semantic search
-- automated purchase-order generation with human-in-the-loop approval
-- a React dashboard for visualization
-
-Architecture
-------------
-- Frontend: React (in `Frontend/`) — dashboard, charts, approval UI
-- Backend: Python Flask (in `Backend/`) — API, MCP orchestration, semantic search
-- AI: Demand forecaster with semantic search, sentence-transformer embeddings for inventory resolution
-- Database: PostgreSQL (schema files at repo root)
-
-Requirements
-------------
+### Prerequisites
 - macOS / Linux / Windows
-- Python 3.9+
-- Node.js + npm or yarn
-- PostgreSQL
-- `ngrok` (optional, for public tunneling)
+- Python 3.9–3.11 recommended
+- Node.js + npm (for frontend)
+- PostgreSQL (local or remote)
+- Homebrew (macOS) recommended for installing system audio tools
 
-Consolidated Setup (single block)
----------------------------------
-Run the commands below from your shell (zsh on macOS). Replace placeholders like `<repo_url>`, `<db_user>`, and `<db_name>`.
-
+### Backend setup
+1. Create and activate a Python virtual environment:
 ```bash
-# 1. Clone repository
-git clone <repo_url>
-cd Team1_LowCodeAgenthon
-
-# 2. Backend: create & activate virtualenv (macOS/Linux)
 cd Backend
 python3 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-pip install fastmcp
-
-# 3. PostgreSQL: load schema and (optional) full dump (run from repo root)
-# Make sure PostgreSQL is running and you have a user & database created
-psql -U <db_user> -d <db_name> -f ../schema_only.sql
-psql -U <db_user> -d <db_name> -f ../full_dump.sql
-
-# 4. Generate sentence-transformer embeddings for semantic search
-python3 semantic_search/vectorembedding.py
-
-# 5. Start MCP orchestration (if applicable)
-python3 semantic_search/combine_mcp_demand_stock_withss.py
-
-# 6. (Optional) expose local backend with ngrok
-# install ngrok separately and run:
-ngrok http 8000
-
-# 7. Start Flask backend (adjust port or env vars as needed)
-python3 app.py
-
-# 8. Frontend: open a new terminal, install and run dev server
-cd ../Frontend
-npm install
-npm run dev
-
-# 9. Visit the app in your browser (default Vite port is 5173)
-echo "Frontend running at http://localhost:5173"
-
+pip install --upgrade pip setuptools wheel
 ```
 
-Notes
------
-- File locations in this repo:
-  - Backend code: `Backend/` (contains `app.py`, API modules, `semantic_search/`)
-  - Frontend app: `Frontend/` (Vite + React)
-  - DB schema & dumps: `schema_only.sql`, `full_dump.sql` (repo root)
+2. Install Python dependencies:
+```bash
+pip install -r requirements.txt
+```
+If you prefer a minimal install for development, install only the essentials:
+```bash
+pip install flask flask-cors psycopg2-binary pandas numpy piper-tts
+```
 
-- If you run into missing package errors, activate the virtualenv (`source Backend/venv/bin/activate`) and install the missing package with `pip install <pkg>`.
-- Use Python 3.9+ and `python3` explicitly on macOS to avoid conflicts with system Python.
+3. Database setup (example):
+```bash
+# from repo root
+psql -U <db_user> -d <db_name> -f schema_only.sql
+# optionally load full dump
+# psql -U <db_user> -d <db_name> -f full_dump.sql
+```
 
-Development tips
-----------------
-- To run backend APIs locally: activate the Backend virtualenv and run `python3 app.py`.
-- Demand forecasting uses historical consumption data for pattern analysis.
-- For semantic search troubleshooting, check the embeddings file (if created) and the `semantic_search/` scripts.
-- Test queries in Test_queries.docx
+4. Prepare semantic embeddings (optional but recommended):
+```bash
+python3 Backend/semantic_search/vectorembedding.py
+```
 
-Future enhancements
--------------------
-- Voice interface (React + Web Speech API)
-- Email notifications for low-stock alerts and POs
+5. Start the backend:
+```bash
+cd Backend
+source venv/bin/activate
+python app.py
+```
+The Flask app listens on port 8080 by default.
+
+### TTS (Piper) notes
+This repo includes a lightweight Piper-based TTS endpoint in `Backend/tts_api.py`.
+- Ensure you have the Piper package installed: `pip install piper-tts`
+- Download the model file (example):
+```bash
+cd Backend
+python3 -c "from piper.download import ensure_model_cached; ensure_model_cached('en_US-lessac-medium')"
+```
+- The endpoint is available at `POST /api/tts` and accepts JSON `{ "text": "..." }`. It returns a WAV file.
+
+### Frontend setup
+1. Install and run the frontend:
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+2. Open `http://localhost:5173` (default Vite port).
+
+## Developer notes
+
+- Use Python 3.9–3.11 for best compatibility with ML libraries.
+- For heavy ML use (Coqui TTS, torch), install correct `torch` wheel before `sentence-transformers`.
+- Remove `__pycache__` and other generated artifacts from commits. Add `__pycache__/` and other binaries to `.gitignore`.
+
+## Recent changes (version2 branch)
+
+This branch contains the following notable changes (summary):
+- **Backend**
+  - `tts_api.py`: Added Piper-based TTS endpoint that synthesizes text to WAV and stores/returns audio files.
+  - `app.py`: Registers `tts_api` blueprint so TTS endpoint is available at `/api/tts`.
+  - Semantic search updates: `Backend/semantic_search/combine_mcp_demand_stock_withss.py` updated with improved docstrings and semantic resolution.
+  - Added helper CSV fixtures and generation scripts for demo/testing: `consumption.csv`, `finance.csv`, `inventory_master.csv`, and `generatedata.py`.
+  - Some large DB dumps and archives were removed from the branch to keep the repository lighter.
+- **Frontend**
+  - Updated pages: `Chatbot.jsx`, `Dashboard.jsx`, `Home.jsx` — UI and behavior improvements for the chatbot and dashboard.
+
+## Changelog & merge guidance
+
+- Before merging to `main`:
+  - Remove `__pycache__` and other binary files from commits and push a `.gitignore` update.
+  - Re-run tests and smoke-test the TTS endpoint (ensure Piper model is present).
+  - Consider moving demo CSVs out of the main repo into a `data/` release artifact if they are large.
+
+## Help & next steps
+
+If you want, I can:
+- Add a `CHANGELOG.md` entry for these changes.
+- Add `.gitignore` entries and remove tracked binary artifacts.
+- Create a small Dockerfile to simplify environment setup (include Piper model download when building).
+
+## Contact
+
+For questions or to request additional documentation or automation, open an issue or ask here.
 
 
+- **Backend**
+
+  - `Backend/tts_api.py`: Added a TTS endpoint (Piper-based voice service) that synthesizes text to WAV and returns audio files.
