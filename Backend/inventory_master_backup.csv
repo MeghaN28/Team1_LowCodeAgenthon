@@ -1,0 +1,501 @@
+date,inventory_id,opening_stock,quantity_consumed,quantity_restocked,closing_stock,vendor_id,lead_time_days,department_count,min_stock,max_capacity,item_name,form,use,embedding,item_type,out_of_stock,low_stock
+2025-08-27,INV00001,104,11,23,35,VEND017,2,2,36,919,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-18,INV00002,161,32,24,153,VEND006,7,4,45,888,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-03,INV00003,202,39,35,198,VEND017,9,1,23,560,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-16,INV00004,328,30,38,336,VEND008,3,5,42,266,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-31,INV00005,719,38,31,712,VEND005,9,5,29,726,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-09,INV00006,149,22,97,224,VEND018,2,2,35,558,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-29,INV00007,330,8,49,371,VEND012,7,4,29,664,Ceftriaxone 1g,Injection,Antibiotic,,Equipment,False,False
+2025-08-24,INV00008,281,39,38,280,VEND008,8,5,26,459,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-13,INV00009,162,44,89,207,VEND012,2,4,20,587,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-13,INV00010,281,36,63,308,VEND008,6,2,13,410,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-22,INV00011,337,30,98,405,VEND015,8,1,18,795,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-25,INV00012,129,8,57,178,VEND015,1,5,46,807,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-12,INV00013,401,35,44,410,VEND005,2,1,10,409,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-09,INV00014,389,20,80,449,VEND017,10,1,10,230,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-12,INV00015,174,42,61,193,VEND004,6,4,21,568,Oximeter,Device,Medical Equipment,,Equipment,False,False
+2025-08-29,INV00016,171,37,70,204,VEND013,1,3,49,408,IV Set,Device,Consumable,,Medication,False,False
+2025-08-11,INV00017,626,12,88,702,VEND019,7,4,42,971,Vitamin C 500mg,Tablet,Vitamin,,Consumable,False,False
+2025-08-20,INV00018,84,2,72,154,VEND011,4,2,32,346,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-09,INV00019,499,17,84,566,VEND014,4,2,36,922,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-22,INV00020,160,33,51,178,VEND015,7,4,38,648,Gauze 10x10cm,Bandage,Surgical,,Equipment,False,False
+2025-08-24,INV00021,336,0,39,0,VEND001,9,5,43,148,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-12,INV00022,112,17,43,138,VEND013,1,2,10,248,Acetaminophen 500mg,Tablet,Pain Relief,,Consumable,False,False
+2025-08-26,INV00023,362,7,94,449,VEND020,1,2,49,746,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-29,INV00024,343,44,45,344,VEND012,4,1,14,930,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-17,INV00025,424,15,63,472,VEND009,1,1,44,562,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-01,INV00026,366,45,97,418,VEND013,4,1,25,285,Saline 500ml,Liquid,Consumable,,Consumable,False,False
+2025-08-19,INV00027,416,5,97,508,VEND014,7,2,26,913,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-01,INV00028,481,27,92,546,VEND004,4,4,29,143,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-16,INV00029,449,26,52,0,VEND012,5,1,45,827,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-13,INV00030,135,43,36,128,VEND011,4,1,37,806,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-21,INV00031,284,26,20,278,VEND015,7,4,13,415,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-19,INV00032,230,7,86,309,VEND020,3,2,37,309,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-09,INV00033,329,46,21,304,VEND011,9,1,21,981,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-12,INV00034,228,45,83,266,VEND004,10,5,47,496,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-20,INV00035,348,44,56,360,VEND005,9,1,42,778,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-14,INV00036,323,8,40,355,VEND011,10,5,20,996,Stethoscope,Device,Medical Equipment,,Equipment,False,False
+2025-08-10,INV00037,547,28,76,595,VEND004,3,2,16,764,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-14,INV00038,211,11,53,20,VEND002,8,3,21,951,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-03,INV00039,120,41,76,155,VEND009,2,4,27,251,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-24,INV00040,141,11,75,205,VEND018,2,1,34,722,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-01,INV00041,253,0,30,283,VEND002,8,2,10,907,Acetaminophen 500mg,Tablet,Pain Relief,,Consumable,False,False
+2025-08-10,INV00042,267,36,72,303,VEND009,2,3,25,567,Oximeter,Device,Medical Equipment,,Equipment,False,False
+2025-08-19,INV00043,231,18,87,300,VEND005,5,2,26,550,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-03,INV00044,147,6,62,203,VEND006,5,4,24,925,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-19,INV00045,361,37,68,392,VEND010,8,5,44,648,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-21,INV00046,262,37,40,265,VEND019,10,5,19,264,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-05,INV00047,274,24,75,325,VEND002,3,2,23,681,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-23,INV00048,417,18,3,402,VEND012,6,4,15,479,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-10,INV00049,207,17,69,259,VEND018,4,2,20,633,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-14,INV00050,239,43,69,46,VEND011,10,2,47,480,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-15,INV00051,196,23,100,15,VEND002,5,5,16,757,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-31,INV00052,426,37,97,486,VEND006,4,5,26,503,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-04,INV00053,374,31,33,376,VEND006,5,3,27,157,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-27,INV00054,268,41,0,227,VEND001,8,2,12,407,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-10,INV00055,365,13,16,0,VEND012,2,4,41,503,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-26,INV00056,312,32,91,371,VEND012,2,3,23,565,IV Set,Device,Consumable,,Medication,False,False
+2025-08-25,INV00057,408,1,14,421,VEND006,7,2,38,123,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-08,INV00058,208,3,53,258,VEND008,5,2,21,229,IV Set,Device,Consumable,,Medication,False,False
+2025-08-06,INV00059,368,18,47,23,VEND019,2,5,24,317,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-27,INV00060,212,11,46,247,VEND013,2,3,41,423,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-17,INV00061,131,44,64,151,VEND015,6,3,17,366,Vitamin C 500mg,Tablet,Vitamin,,Consumable,False,False
+2025-08-07,INV00062,486,35,45,14,VEND017,2,4,15,413,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-30,INV00063,134,49,48,133,VEND013,4,5,43,164,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-15,INV00064,762,12,19,769,VEND004,8,4,45,904,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-24,INV00065,413,30,80,463,VEND019,2,3,50,506,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-05,INV00066,70,26,13,57,VEND018,2,5,47,148,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-10,INV00067,330,9,75,396,VEND005,10,5,41,889,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-20,INV00068,522,13,94,603,VEND015,5,2,20,616,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-19,INV00069,479,29,87,537,VEND014,5,5,32,346,Gauze 10x10cm,Bandage,Surgical,,Equipment,False,False
+2025-08-01,INV00070,558,2,89,645,VEND001,3,1,27,350,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-31,INV00071,180,37,42,185,VEND007,1,2,46,286,Gloves Nitrile,Device,Consumable,,Equipment,False,False
+2025-08-25,INV00072,786,6,85,865,VEND020,10,3,49,782,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-17,INV00073,316,37,70,349,VEND005,4,5,43,349,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-28,INV00074,415,13,57,459,VEND015,10,4,30,606,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-08,INV00075,461,45,62,478,VEND009,6,4,32,657,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-25,INV00076,452,46,22,428,VEND004,8,1,31,231,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-21,INV00077,594,19,20,595,VEND009,4,2,14,949,Paracetamol Syrup,Syrup,Pain Relief,,Consumable,False,False
+2025-08-27,INV00078,515,3,41,553,VEND001,3,4,38,920,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-23,INV00079,653,48,20,625,VEND020,3,5,35,655,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-28,INV00080,406,25,54,435,VEND016,10,5,16,906,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-04,INV00081,324,7,46,35,VEND008,3,1,36,604,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-08,INV00082,538,10,92,620,VEND003,2,3,11,549,IV Set,Device,Consumable,,Medication,False,False
+2025-08-27,INV00083,758,8,34,784,VEND006,8,3,36,852,Scalpel,Device,Surgical,,Equipment,False,False
+2025-08-29,INV00084,434,13,1,422,VEND020,10,3,47,447,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-29,INV00085,393,17,97,473,VEND013,6,4,17,117,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-03,INV00086,259,38,2,223,VEND013,5,5,30,885,IV Set,Device,Consumable,,Medication,False,False
+2025-08-29,INV00087,116,31,12,97,VEND006,8,2,41,129,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-06,INV00088,222,6,84,300,VEND015,4,5,28,254,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-01,INV00089,112,4,35,143,VEND004,7,5,33,657,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-19,INV00090,376,3,71,444,VEND002,3,3,18,251,IV Set,Device,Consumable,,Equipment,False,False
+2025-08-12,INV00091,304,24,61,341,VEND004,10,4,12,462,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-16,INV00092,452,18,12,446,VEND017,7,3,12,621,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-31,INV00093,239,22,83,300,VEND012,6,5,21,968,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-13,INV00094,410,13,95,492,VEND011,6,4,10,679,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-29,INV00095,218,17,55,256,VEND002,2,4,48,670,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-12,INV00096,331,34,44,341,VEND020,7,5,15,268,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-16,INV00097,757,25,44,776,VEND005,1,4,30,898,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-24,INV00098,104,35,8,77,VEND003,6,2,47,248,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-01,INV00099,350,36,100,414,VEND014,3,4,41,635,Ceftriaxone 1g,Injection,Antibiotic,,Equipment,False,False
+2025-08-13,INV00100,326,40,42,328,VEND018,7,4,21,825,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-24,INV00101,486,11,88,563,VEND002,3,3,38,225,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-17,INV00102,124,9,40,155,VEND011,8,5,21,644,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-01,INV00103,95,7,95,183,VEND003,4,3,19,127,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-11,INV00104,97,0,3,100,VEND005,3,2,34,107,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-03,INV00105,359,29,99,429,VEND007,5,4,18,519,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-21,INV00106,293,24,29,298,VEND001,1,3,42,620,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-23,INV00107,536,19,49,566,VEND014,4,3,48,841,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-23,INV00108,391,8,47,430,VEND012,7,4,15,712,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-05,INV00109,67,14,33,86,VEND017,7,4,11,939,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-22,INV00110,177,2,77,252,VEND004,9,4,28,775,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-16,INV00111,303,38,5,270,VEND007,3,1,41,542,Gauze 10x10cm,Bandage,Surgical,,Equipment,False,False
+2025-08-10,INV00112,64,6,41,99,VEND019,6,2,16,125,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-10,INV00113,417,11,28,434,VEND005,3,2,46,535,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-10,INV00114,489,7,94,576,VEND004,4,4,29,660,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-01,INV00115,643,9,79,713,VEND009,6,2,14,874,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-30,INV00116,565,38,80,607,VEND011,8,5,15,820,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-20,INV00117,523,0,85,608,VEND019,1,4,37,974,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-10,INV00118,155,36,20,139,VEND019,5,5,41,166,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-20,INV00119,140,8,63,195,VEND012,7,5,21,714,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-28,INV00120,596,44,35,587,VEND016,4,3,11,558,IV Set,Device,Consumable,,Medication,False,False
+2025-08-04,INV00121,410,17,77,470,VEND018,10,1,17,570,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-29,INV00122,478,8,23,493,VEND001,8,2,47,946,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-08,INV00123,179,15,53,217,VEND001,1,4,31,471,Ibuprofen 200mg,Capsule,Pain Relief,,Equipment,False,False
+2025-08-19,INV00124,498,6,44,536,VEND005,2,5,39,604,Paracetamol Syrup,Syrup,Pain Relief,,Equipment,False,False
+2025-08-12,INV00125,270,16,100,354,VEND009,4,4,17,467,Vitamin C 500mg,Tablet,Vitamin,,Consumable,False,False
+2025-08-18,INV00126,289,46,94,337,VEND006,3,5,25,480,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-07,INV00127,431,24,12,0,VEND012,3,1,35,643,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-26,INV00128,253,30,76,299,VEND005,9,5,26,324,IV Set,Device,Consumable,,Medication,False,False
+2025-08-13,INV00129,534,30,90,594,VEND012,10,5,31,896,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-24,INV00130,217,42,65,240,VEND011,6,4,39,587,IV Set,Device,Consumable,,Medication,False,False
+2025-08-08,INV00131,513,18,44,539,VEND015,5,4,48,977,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-07,INV00132,330,30,66,366,VEND006,10,3,39,124,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-24,INV00133,91,15,17,93,VEND005,4,4,14,103,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-01,INV00134,219,38,14,195,VEND005,5,5,29,651,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-04,INV00135,434,12,81,503,VEND014,7,5,22,491,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-20,INV00136,507,20,74,561,VEND007,6,5,45,935,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-19,INV00137,138,45,31,124,VEND004,4,1,37,292,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-04,INV00138,327,34,91,384,VEND011,7,1,28,477,IV Set,Device,Consumable,,Medication,False,False
+2025-08-27,INV00139,441,2,71,510,VEND018,2,3,10,366,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-18,INV00140,432,13,23,442,VEND002,4,5,43,913,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-09,INV00141,838,19,15,834,VEND016,5,1,36,839,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-04,INV00142,473,10,39,502,VEND015,3,3,32,977,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-02,INV00143,224,40,61,245,VEND008,5,2,10,784,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-08,INV00144,533,41,59,551,VEND011,2,5,18,981,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-19,INV00145,448,30,57,475,VEND012,7,2,28,311,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-30,INV00146,269,10,92,351,VEND016,10,4,42,346,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-21,INV00147,264,30,15,249,VEND020,7,4,45,726,Ceftriaxone 1g,Injection,Antibiotic,,Equipment,False,False
+2025-08-06,INV00148,724,33,57,748,VEND005,7,1,12,878,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-07,INV00149,470,14,87,543,VEND014,5,2,24,642,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-09,INV00150,221,38,32,215,VEND010,5,3,46,259,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-11,INV00151,460,47,73,486,VEND017,4,4,27,829,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-29,INV00152,144,25,14,133,VEND001,1,4,45,251,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-06,INV00153,201,6,72,267,VEND011,3,1,15,686,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-31,INV00154,372,9,98,461,VEND002,6,4,46,539,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-29,INV00155,120,10,26,136,VEND005,4,1,28,351,IV Set,Device,Consumable,,Medication,False,False
+2025-08-20,INV00156,378,8,22,392,VEND019,6,1,41,794,Acetaminophen 500mg,Tablet,Pain Relief,,Consumable,False,False
+2025-08-25,INV00157,120,16,91,195,VEND003,1,1,22,138,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-28,INV00158,136,29,45,152,VEND005,4,4,40,110,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-07,INV00159,227,8,16,235,VEND019,1,5,32,590,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-26,INV00160,422,30,24,416,VEND008,4,4,20,128,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-30,INV00161,598,21,37,614,VEND004,7,1,50,737,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-13,INV00162,155,22,23,156,VEND007,4,4,20,330,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-24,INV00163,105,26,54,133,VEND019,7,1,21,819,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-08,INV00164,295,20,47,322,VEND006,3,2,26,319,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-17,INV00165,796,41,53,808,VEND004,4,1,44,818,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-15,INV00166,363,28,17,352,VEND008,9,2,28,493,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-09,INV00167,487,30,18,475,VEND007,3,1,39,288,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-21,INV00168,109,5,27,131,VEND012,5,5,32,124,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-21,INV00169,409,7,55,457,VEND019,5,2,32,410,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-30,INV00170,150,28,5,127,VEND012,3,2,42,995,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-31,INV00171,470,30,63,503,VEND007,5,4,42,742,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-06,INV00172,368,27,33,374,VEND014,7,4,25,369,Ceftriaxone 1g,Injection,Antibiotic,,Consumable,False,False
+2025-08-04,INV00173,411,20,99,490,VEND006,6,2,17,503,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-02,INV00174,114,35,51,130,VEND005,9,3,14,100,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-08,INV00175,349,42,14,321,VEND004,4,2,32,830,Acetaminophen 500mg,Tablet,Pain Relief,,Equipment,False,False
+2025-08-26,INV00176,318,29,15,304,VEND007,6,2,50,491,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-31,INV00177,188,5,57,240,VEND010,9,5,20,187,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-18,INV00178,443,1,13,455,VEND020,7,3,17,794,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-26,INV00179,168,37,58,189,VEND007,6,1,12,239,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-29,INV00180,454,2,74,526,VEND012,4,1,28,484,Vitamin C 500mg,Tablet,Vitamin,,Equipment,False,False
+2025-08-09,INV00181,415,49,33,399,VEND009,1,5,37,856,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-17,INV00182,185,2,56,0,VEND015,6,2,43,997,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-28,INV00183,404,4,40,440,VEND005,7,2,32,669,Acetaminophen 500mg,Tablet,Pain Relief,,Consumable,False,False
+2025-08-17,INV00184,555,19,92,628,VEND008,9,1,12,566,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-24,INV00185,177,17,52,212,VEND017,1,5,10,280,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-11,INV00186,417,4,70,483,VEND007,8,3,19,548,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-17,INV00187,454,9,40,485,VEND018,10,5,42,475,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-12,INV00188,119,15,67,171,VEND006,4,1,43,799,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-30,INV00189,548,48,32,532,VEND016,9,3,47,954,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-15,INV00190,284,41,38,281,VEND013,7,3,50,574,IV Set,Device,Consumable,,Medication,False,False
+2025-08-04,INV00191,227,45,59,241,VEND008,6,5,45,810,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-24,INV00192,177,41,60,196,VEND005,10,1,43,228,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-10,INV00193,318,49,21,290,VEND006,3,4,45,583,Saline 500ml,Liquid,Consumable,,Equipment,False,False
+2025-08-14,INV00194,111,39,27,99,VEND003,6,3,43,675,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-23,INV00195,362,40,38,360,VEND002,4,1,40,890,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-17,INV00196,91,17,95,169,VEND015,8,5,23,194,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-13,INV00197,356,33,15,338,VEND018,1,5,29,454,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-09,INV00198,86,47,42,81,VEND013,9,4,15,411,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-03,INV00199,476,38,96,0,VEND015,7,1,26,599,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-27,INV00200,209,7,51,253,VEND019,5,5,42,183,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-21,INV00201,389,26,4,367,VEND005,10,2,31,362,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-29,INV00202,570,34,85,621,VEND001,4,4,28,651,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-30,INV00203,325,14,81,392,VEND007,9,5,15,581,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-04,INV00204,150,18,6,138,VEND005,7,5,28,170,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-01,INV00205,410,5,5,410,VEND004,8,3,49,115,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-10,INV00206,343,45,59,357,VEND013,5,2,49,217,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-27,INV00207,241,49,57,249,VEND007,7,4,45,192,Saline 500ml,Liquid,Consumable,,Consumable,False,False
+2025-08-19,INV00208,503,28,18,493,VEND009,9,5,26,658,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-31,INV00209,172,20,76,15,VEND014,4,1,16,165,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-10,INV00210,460,21,49,488,VEND010,6,5,37,582,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-28,INV00211,483,14,84,0,VEND006,8,3,47,374,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-03,INV00212,132,27,57,162,VEND014,3,3,36,183,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-15,INV00213,1006,35,20,991,VEND009,1,2,26,982,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-09,INV00214,443,24,91,510,VEND012,8,1,41,987,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-26,INV00215,199,3,96,292,VEND001,3,4,29,723,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-05,INV00216,138,30,12,49,VEND019,3,5,50,127,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-04,INV00217,381,20,39,400,VEND010,5,2,48,706,Saline 500ml,Liquid,Consumable,,Consumable,False,False
+2025-08-22,INV00218,565,27,69,607,VEND005,9,4,19,175,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-29,INV00219,511,13,71,569,VEND018,6,2,36,782,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-04,INV00220,278,21,97,354,VEND005,8,4,12,696,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-06,INV00221,81,3,48,126,VEND017,9,5,37,494,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-29,INV00222,428,8,15,9,VEND020,2,2,10,267,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-21,INV00223,111,48,12,75,VEND007,10,5,34,420,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-17,INV00224,488,4,5,489,VEND013,4,3,30,997,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-16,INV00225,52,12,75,115,VEND005,5,5,25,626,IV Set,Device,Consumable,,Medication,False,False
+2025-08-23,INV00226,72,8,22,86,VEND018,10,2,16,562,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-13,INV00227,482,41,71,512,VEND015,3,1,16,103,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-07,INV00228,220,21,81,0,VEND011,8,5,46,898,Antiseptic Solution,Liquid,Surgical,,Equipment,False,False
+2025-08-16,INV00229,223,34,58,247,VEND016,3,5,47,668,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-17,INV00230,365,40,16,341,VEND004,1,5,20,216,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-26,INV00231,194,10,28,212,VEND001,8,1,45,829,Scalpel,Device,Surgical,,Equipment,False,False
+2025-08-23,INV00232,448,23,25,450,VEND006,6,2,50,1000,IV Set,Device,Consumable,,Medication,False,False
+2025-08-12,INV00233,95,9,85,171,VEND019,4,1,19,711,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-20,INV00234,296,35,96,357,VEND020,3,1,41,318,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-13,INV00235,404,17,18,405,VEND012,4,2,17,413,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-17,INV00236,110,25,56,141,VEND020,5,1,48,656,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-18,INV00237,345,23,78,400,VEND011,3,4,48,859,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-27,INV00238,431,11,0,420,VEND003,7,4,15,529,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-16,INV00239,251,25,35,39,VEND010,7,1,40,280,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-28,INV00240,168,43,17,142,VEND020,9,5,30,827,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-26,INV00241,387,21,53,419,VEND007,9,3,19,162,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-14,INV00242,149,35,90,204,VEND013,7,2,46,252,IV Set,Device,Consumable,,Equipment,False,False
+2025-08-27,INV00243,318,48,93,41,VEND013,5,1,42,610,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-19,INV00244,146,28,2,120,VEND010,6,5,43,241,Paracetamol Syrup,Syrup,Pain Relief,,Consumable,False,False
+2025-08-31,INV00245,244,26,91,309,VEND007,9,3,14,720,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-14,INV00246,165,48,40,157,VEND010,2,3,33,227,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-19,INV00247,163,12,74,225,VEND019,9,5,50,468,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-17,INV00248,323,14,46,355,VEND008,5,2,21,481,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-09,INV00249,158,47,12,123,VEND004,1,1,48,400,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-01,INV00250,323,23,15,315,VEND010,1,3,45,873,Thermometer,Device,Medical Equipment,,Equipment,False,False
+2025-08-02,INV00251,375,47,33,361,VEND011,5,2,24,684,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-01,INV00252,88,22,25,91,VEND006,4,5,26,714,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-28,INV00253,146,27,94,213,VEND020,7,2,48,249,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-01,INV00254,212,46,22,188,VEND003,8,1,12,311,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-18,INV00255,348,50,44,342,VEND016,1,2,46,768,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-31,INV00256,193,22,100,271,VEND014,2,5,11,265,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-29,INV00257,161,6,8,163,VEND011,4,5,21,345,Acetaminophen 500mg,Tablet,Pain Relief,,Consumable,False,False
+2025-08-04,INV00258,494,42,45,0,VEND012,6,1,33,996,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-16,INV00259,362,20,2,344,VEND005,10,2,40,407,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-16,INV00260,429,25,80,484,VEND006,1,3,12,484,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-05,INV00261,513,34,78,557,VEND003,8,4,45,844,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-23,INV00262,175,21,70,224,VEND006,4,1,45,237,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-30,INV00263,145,31,8,122,VEND013,1,2,41,259,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-31,INV00264,72,15,77,134,VEND004,2,5,30,401,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-08,INV00265,137,31,15,121,VEND020,2,2,29,652,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-22,INV00266,250,41,5,214,VEND013,4,4,19,311,Gloves Nitrile,Device,Consumable,,Equipment,False,False
+2025-08-26,INV00267,386,24,50,412,VEND004,2,5,40,584,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-12,INV00268,432,19,94,507,VEND002,9,4,45,375,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-10,INV00269,150,7,28,171,VEND009,3,1,14,493,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-23,INV00270,358,16,62,404,VEND002,1,4,41,105,Ceftriaxone 1g,Injection,Antibiotic,,Consumable,False,False
+2025-08-06,INV00271,139,30,76,185,VEND006,9,5,26,606,Vitamin C 500mg,Tablet,Vitamin,,Consumable,False,False
+2025-08-13,INV00272,186,0,9,195,VEND008,8,4,47,519,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-18,INV00273,372,24,57,405,VEND009,9,3,40,847,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-31,INV00274,179,15,51,215,VEND013,5,5,31,276,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-30,INV00275,359,50,53,362,VEND018,9,3,30,394,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-04,INV00276,89,12,19,0,VEND017,7,1,26,778,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-08,INV00277,280,2,11,289,VEND008,4,5,22,205,Ceftriaxone 1g,Injection,Antibiotic,,Consumable,False,False
+2025-08-13,INV00278,116,5,73,184,VEND011,2,5,21,431,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-03,INV00279,586,5,98,679,VEND010,10,5,25,151,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-08,INV00280,629,17,3,615,VEND004,6,2,19,837,Acetaminophen 500mg,Tablet,Pain Relief,,Consumable,False,False
+2025-08-13,INV00281,566,4,89,651,VEND007,4,2,32,807,Saline 500ml,Liquid,Consumable,,Equipment,False,False
+2025-08-03,INV00282,123,48,6,81,VEND012,10,2,24,250,Ceftriaxone 1g,Injection,Antibiotic,,Equipment,False,False
+2025-08-25,INV00283,408,34,85,459,VEND011,1,1,45,264,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-04,INV00284,533,50,93,576,VEND006,6,1,12,643,IV Set,Device,Consumable,,Medication,False,False
+2025-08-04,INV00285,535,3,37,569,VEND018,7,4,43,961,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-12,INV00286,515,33,12,494,VEND017,3,3,15,762,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-04,INV00287,776,13,58,821,VEND014,6,1,12,798,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-02,INV00288,98,20,48,126,VEND009,5,2,23,106,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-25,INV00289,146,8,17,155,VEND008,2,2,31,203,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-23,INV00290,213,25,37,225,VEND002,1,3,26,638,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-11,INV00291,227,3,83,0,VEND013,8,3,29,596,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-22,INV00292,185,6,95,274,VEND006,3,3,44,602,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-31,INV00293,378,0,52,430,VEND013,2,2,38,935,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-06,INV00294,501,6,35,530,VEND015,6,5,48,124,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-10,INV00295,94,32,41,103,VEND007,2,5,50,454,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-28,INV00296,239,27,20,232,VEND013,3,3,47,393,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-02,INV00297,270,39,65,296,VEND008,2,2,24,848,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-23,INV00298,137,23,20,134,VEND007,4,1,35,710,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-20,INV00299,549,13,91,627,VEND020,7,3,36,927,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-11,INV00300,191,42,97,246,VEND020,4,5,47,108,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-12,INV00301,221,31,34,224,VEND010,9,4,43,428,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-19,INV00302,187,39,44,192,VEND010,9,2,24,579,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-07,INV00303,240,37,97,300,VEND006,7,2,24,865,Paracetamol Syrup,Syrup,Pain Relief,,Consumable,False,False
+2025-08-12,INV00304,443,45,41,439,VEND008,9,2,24,947,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-06,INV00305,141,9,58,190,VEND007,3,4,49,870,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-27,INV00306,406,6,54,454,VEND001,10,1,23,892,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-05,INV00307,414,40,25,0,VEND011,10,5,42,315,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-06,INV00308,201,10,6,197,VEND018,10,2,24,499,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-09,INV00309,99,45,30,84,VEND003,8,4,18,635,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-13,INV00310,253,11,40,282,VEND016,8,1,11,866,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-11,INV00311,328,39,15,30,VEND010,10,2,31,662,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-14,INV00312,442,17,7,432,VEND011,2,4,50,303,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-18,INV00313,406,23,35,33,VEND019,9,3,34,400,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-01,INV00314,291,46,97,342,VEND011,5,1,49,754,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-12,INV00315,493,2,97,588,VEND016,10,5,33,699,Saline 500ml,Liquid,Consumable,,Consumable,False,False
+2025-08-06,INV00316,196,14,34,35,VEND012,3,4,36,632,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-08,INV00317,342,43,81,380,VEND012,5,4,28,392,Saline 500ml,Liquid,Consumable,,Consumable,False,False
+2025-08-04,INV00318,838,15,99,922,VEND004,3,2,31,904,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-25,INV00319,184,44,53,193,VEND015,2,3,13,565,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-10,INV00320,399,9,96,47,VEND011,9,3,48,712,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-07,INV00321,208,5,11,214,VEND010,2,4,45,658,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-13,INV00322,301,24,73,350,VEND007,7,3,24,544,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-23,INV00323,497,19,20,13,VEND008,7,4,14,830,Surgical Cap,Device,Surgical,,Equipment,False,False
+2025-08-20,INV00324,538,19,66,585,VEND005,3,3,48,572,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-28,INV00325,80,23,44,101,VEND017,10,5,37,270,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-26,INV00326,358,3,56,411,VEND012,8,1,24,915,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-22,INV00327,104,24,67,147,VEND003,3,1,23,236,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-23,INV00328,1002,37,40,1005,VEND010,5,2,32,999,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-18,INV00329,733,48,89,774,VEND013,8,5,46,716,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-13,INV00330,117,25,79,171,VEND017,7,2,41,208,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-25,INV00331,307,12,59,354,VEND004,8,2,20,599,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-01,INV00332,89,49,39,79,VEND009,9,3,33,452,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-14,INV00333,327,13,29,343,VEND016,6,5,45,981,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-03,INV00334,466,6,14,474,VEND005,6,2,47,999,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-09,INV00335,122,34,61,149,VEND015,8,5,12,461,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-19,INV00336,640,44,65,661,VEND003,6,2,36,852,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-06,INV00337,367,24,88,431,VEND003,8,4,31,702,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-03,INV00338,461,46,21,436,VEND020,3,5,41,576,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-04,INV00339,157,13,93,237,VEND018,7,1,32,394,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-28,INV00340,260,21,29,268,VEND001,9,1,41,562,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-13,INV00341,292,26,71,337,VEND001,7,4,17,635,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-02,INV00342,591,31,96,656,VEND007,7,3,10,918,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-01,INV00343,501,15,75,561,VEND014,2,1,11,128,Oximeter,Device,Medical Equipment,,Consumable,False,False
+2025-08-01,INV00344,304,24,75,355,VEND015,5,3,19,107,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-12,INV00345,513,35,82,560,VEND019,4,1,48,920,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-29,INV00346,972,39,81,1014,VEND015,6,5,19,970,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-09,INV00347,394,23,100,471,VEND001,8,1,37,121,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-08,INV00348,123,26,18,115,VEND002,1,2,36,122,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-22,INV00349,453,38,7,422,VEND015,8,1,31,699,IV Set,Device,Consumable,,Medication,False,False
+2025-08-14,INV00350,241,50,42,233,VEND017,2,2,21,955,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-28,INV00351,254,32,71,293,VEND005,10,3,29,828,Face Mask,Device,Consumable,,Equipment,False,False
+2025-08-05,INV00352,138,41,28,125,VEND009,7,5,17,347,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-28,INV00353,152,12,95,235,VEND007,9,2,45,555,IV Set,Device,Consumable,,Medication,False,False
+2025-08-22,INV00354,554,18,63,599,VEND006,5,3,18,559,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-17,INV00355,460,12,31,479,VEND014,7,1,42,925,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-30,INV00356,125,32,55,148,VEND007,1,2,49,629,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-05,INV00357,584,5,1,580,VEND013,9,4,30,989,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-26,INV00358,145,25,71,191,VEND004,3,2,31,195,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-15,INV00359,74,39,90,125,VEND007,6,1,11,181,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-04,INV00360,489,22,42,509,VEND017,10,2,26,125,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-28,INV00361,157,6,97,39,VEND015,2,4,40,251,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-17,INV00362,282,11,1,272,VEND005,2,4,43,367,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-13,INV00363,190,15,69,244,VEND020,3,1,40,243,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-19,INV00364,108,40,44,112,VEND014,9,5,15,104,Ceftriaxone 1g,Injection,Antibiotic,,Consumable,False,False
+2025-08-29,INV00365,274,38,53,289,VEND001,4,2,38,318,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-18,INV00366,93,30,12,75,VEND011,9,3,41,380,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-10,INV00367,196,16,59,239,VEND020,3,4,16,978,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-04,INV00368,475,5,13,483,VEND020,10,2,14,300,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-21,INV00369,236,13,16,239,VEND014,3,4,11,225,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-08,INV00370,119,40,81,160,VEND002,7,1,35,596,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-26,INV00371,523,7,51,567,VEND010,3,2,14,546,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-10,INV00372,57,11,14,27,VEND012,1,5,28,620,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-31,INV00373,283,19,87,351,VEND018,5,2,42,514,Vitamin C 500mg,Tablet,Vitamin,,Consumable,False,False
+2025-08-07,INV00374,550,29,100,621,VEND008,7,2,46,621,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-01,INV00375,194,26,58,226,VEND012,4,2,26,346,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-29,INV00376,535,35,97,597,VEND018,2,4,46,539,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-11,INV00377,139,4,81,216,VEND011,2,4,40,193,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-25,INV00378,402,30,1,35,VEND014,2,2,36,361,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-14,INV00379,275,18,57,0,VEND017,8,1,22,724,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-05,INV00380,266,45,34,0,VEND001,9,2,30,945,Antiseptic Solution,Liquid,Surgical,,Equipment,False,False
+2025-08-19,INV00381,295,39,10,266,VEND020,4,2,18,862,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-07,INV00382,371,12,84,443,VEND012,2,5,46,394,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-23,INV00383,364,15,61,410,VEND005,3,4,46,735,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-13,INV00384,457,1,51,20,VEND013,7,4,21,601,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-07,INV00385,341,29,12,324,VEND005,7,5,47,786,Syringe 5ml,Device,Consumable,,Equipment,False,False
+2025-08-24,INV00386,154,4,94,244,VEND002,8,3,18,347,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-11,INV00387,349,14,16,45,VEND016,6,2,46,407,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-31,INV00388,130,20,43,153,VEND020,1,3,27,120,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-05,INV00389,131,38,29,122,VEND011,3,3,47,170,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-20,INV00390,577,22,14,569,VEND017,5,2,41,892,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-25,INV00391,539,25,48,562,VEND010,4,3,28,291,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-25,INV00392,65,10,52,107,VEND016,10,4,11,460,Saline 500ml,Liquid,Consumable,,Consumable,False,False
+2025-08-23,INV00393,445,39,67,473,VEND009,5,2,36,478,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-06,INV00394,86,30,22,78,VEND004,8,2,34,250,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-29,INV00395,399,48,97,448,VEND001,1,1,17,383,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-01,INV00396,538,22,68,584,VEND010,6,3,41,625,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-13,INV00397,518,50,40,508,VEND013,2,5,50,574,Syringe 5ml,Device,Consumable,,Equipment,False,False
+2025-08-04,INV00398,333,38,29,324,VEND001,5,4,10,623,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-08,INV00399,420,33,93,0,VEND013,6,3,36,640,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-28,INV00400,343,4,89,428,VEND010,8,3,14,907,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-12,INV00401,262,12,45,295,VEND010,1,4,37,935,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-18,INV00402,172,21,31,182,VEND010,2,2,25,793,Stethoscope,Device,Medical Equipment,,Equipment,False,False
+2025-08-01,INV00403,510,49,62,523,VEND008,1,2,45,745,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-19,INV00404,272,20,38,290,VEND014,1,1,49,301,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-28,INV00405,115,0,75,190,VEND008,2,3,16,164,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-21,INV00406,121,1,77,197,VEND011,1,2,19,403,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-29,INV00407,134,0,22,156,VEND006,4,5,50,279,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-18,INV00408,128,12,28,144,VEND007,8,4,38,362,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-31,INV00409,680,1,19,698,VEND013,4,3,18,834,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-25,INV00410,171,15,75,231,VEND019,3,4,14,502,Syringe 5ml,Device,Consumable,,Consumable,False,False
+2025-08-10,INV00411,322,35,39,326,VEND011,3,1,10,410,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-06,INV00412,477,2,36,511,VEND001,6,2,19,916,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-29,INV00413,133,32,9,110,VEND015,9,5,40,158,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-25,INV00414,61,15,77,123,VEND013,1,1,14,149,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-14,INV00415,211,35,82,258,VEND003,3,5,39,586,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-26,INV00416,441,11,54,484,VEND003,1,2,38,939,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-23,INV00417,404,45,10,25,VEND001,8,3,26,138,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-31,INV00418,194,2,52,244,VEND002,7,1,11,935,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-03,INV00419,113,38,56,131,VEND015,2,3,33,465,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-30,INV00420,326,35,1,292,VEND011,10,2,31,416,Scalpel,Device,Surgical,,Equipment,False,False
+2025-08-18,INV00421,294,28,87,353,VEND005,4,1,11,960,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-14,INV00422,342,13,31,43,VEND014,8,1,44,396,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-17,INV00423,170,25,57,202,VEND019,7,2,14,467,Thermometer,Device,Medical Equipment,,Medication,False,False
+2025-08-25,INV00424,658,24,60,694,VEND011,9,3,27,907,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-28,INV00425,427,45,13,395,VEND008,2,1,37,627,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-03,INV00426,103,15,26,0,VEND018,2,5,17,309,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-16,INV00427,94,42,27,79,VEND020,2,4,14,303,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-28,INV00428,696,29,67,734,VEND011,4,2,47,893,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-24,INV00429,304,34,69,339,VEND017,5,4,32,803,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-05,INV00430,356,25,34,14,VEND011,4,1,15,479,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-25,INV00431,154,31,35,158,VEND003,6,2,34,244,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-10,INV00432,411,46,49,22,VEND006,5,5,23,518,Surgical Cap,Device,Surgical,,Equipment,False,False
+2025-08-07,INV00433,230,34,80,276,VEND012,4,3,15,952,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-29,INV00434,138,30,69,177,VEND007,4,1,45,791,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-28,INV00435,136,13,17,140,VEND007,1,2,37,194,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-17,INV00436,282,23,92,351,VEND007,9,1,49,951,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-11,INV00437,171,17,77,0,VEND002,5,5,18,737,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-22,INV00438,805,3,62,32,VEND011,5,3,33,836,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-20,INV00439,74,28,100,146,VEND014,9,4,10,127,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-28,INV00440,677,30,78,725,VEND018,4,5,24,849,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-17,INV00441,150,36,88,202,VEND015,10,5,42,135,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-28,INV00442,84,13,9,80,VEND002,8,4,24,182,Vitamin C 500mg,Tablet,Vitamin,,Medication,False,False
+2025-08-27,INV00443,381,8,72,445,VEND012,7,4,13,733,Bandage 2cm,Bandage,Surgical,,Medication,False,False
+2025-08-12,INV00444,235,14,27,248,VEND016,3,3,22,114,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-17,INV00445,204,23,59,240,VEND004,3,4,35,478,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-29,INV00446,377,7,20,0,VEND010,10,2,36,755,Antiseptic Solution,Liquid,Surgical,,Medication,False,False
+2025-08-08,INV00447,156,18,52,190,VEND016,8,2,38,117,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-31,INV00448,330,44,93,379,VEND004,3,1,46,518,Gloves Nitrile,Device,Consumable,,Consumable,False,False
+2025-08-09,INV00449,156,30,3,129,VEND015,5,3,46,674,Paracetamol Syrup,Syrup,Pain Relief,,Medication,False,False
+2025-08-10,INV00450,177,6,75,246,VEND020,7,1,21,854,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-10,INV00451,683,45,19,657,VEND011,7,2,44,875,Paracetamol Syrup,Syrup,Pain Relief,,Consumable,False,False
+2025-08-22,INV00452,497,6,93,584,VEND002,10,5,26,381,IV Set,Device,Consumable,,Consumable,False,False
+2025-08-06,INV00453,121,26,38,133,VEND002,9,4,13,952,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-12,INV00454,184,33,7,35,VEND007,8,3,36,165,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-23,INV00455,305,17,73,361,VEND001,8,1,46,337,Bandage 2cm,Bandage,Surgical,,Consumable,False,False
+2025-08-08,INV00456,158,47,38,149,VEND001,6,5,29,452,Acetaminophen 500mg,Tablet,Pain Relief,,Medication,False,False
+2025-08-18,INV00457,363,8,8,363,VEND016,6,3,31,718,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-04,INV00458,454,49,51,456,VEND016,1,2,26,993,Thermometer,Device,Medical Equipment,,Consumable,False,False
+2025-08-21,INV00459,400,39,49,410,VEND001,4,4,38,848,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-15,INV00460,208,23,60,245,VEND006,7,5,42,473,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-23,INV00461,329,7,88,410,VEND014,10,1,33,694,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-28,INV00462,283,13,45,315,VEND012,7,5,40,252,Stethoscope,Device,Medical Equipment,,Consumable,False,False
+2025-08-13,INV00463,474,7,68,535,VEND001,9,2,20,235,Scalpel,Device,Surgical,,Consumable,False,False
+2025-08-10,INV00464,677,28,4,653,VEND012,4,5,35,798,Face Mask,Device,Consumable,,Equipment,False,False
+2025-08-03,INV00465,476,2,73,0,VEND001,8,2,30,311,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-23,INV00466,122,41,44,125,VEND009,1,1,50,210,Amoxicillin 250mg,Capsule,Antibiotic,,Medication,False,False
+2025-08-13,INV00467,301,9,11,303,VEND003,1,4,22,489,Gloves Nitrile,Device,Consumable,,Medication,False,False
+2025-08-11,INV00468,231,2,21,250,VEND009,7,3,40,358,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-17,INV00469,377,32,14,34,VEND008,2,5,35,355,Surgical Cap,Device,Surgical,,Equipment,False,False
+2025-08-21,INV00470,308,15,71,39,VEND009,4,4,40,854,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-08,INV00471,108,12,53,149,VEND005,7,1,46,683,Oximeter,Device,Medical Equipment,,Medication,False,False
+2025-08-17,INV00472,118,19,17,116,VEND005,2,2,42,706,Syringe 5ml,Device,Consumable,,Equipment,False,False
+2025-08-01,INV00473,264,49,34,249,VEND008,3,4,48,731,Saline 500ml,Liquid,Consumable,,Medication,False,False
+2025-08-23,INV00474,247,47,85,285,VEND016,4,5,21,412,Vitamin C 500mg,Tablet,Vitamin,,Consumable,False,False
+2025-08-28,INV00475,252,27,37,262,VEND011,9,4,22,356,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-23,INV00476,309,32,92,369,VEND007,10,4,23,859,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-29,INV00477,521,36,21,506,VEND017,3,4,21,301,Face Mask,Device,Consumable,,Medication,False,False
+2025-08-13,INV00478,508,25,42,15,VEND001,2,5,16,553,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-29,INV00479,735,16,1,720,VEND003,2,2,10,898,Insulin 10ml,Injection,Diabetic,,Consumable,False,False
+2025-08-31,INV00480,205,14,61,252,VEND020,8,4,42,208,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-15,INV00481,66,41,12,37,VEND006,9,1,38,132,Surgical Cap,Device,Surgical,,Medication,False,True
+2025-08-18,INV00482,432,25,53,460,VEND013,7,4,43,590,Ceftriaxone 1g,Injection,Antibiotic,,Consumable,False,False
+2025-08-26,INV00483,147,10,87,224,VEND017,9,1,35,133,Insulin 10ml,Injection,Diabetic,,Medication,False,False
+2025-08-29,INV00484,806,22,76,860,VEND006,10,1,41,791,Scalpel,Device,Surgical,,Medication,False,False
+2025-08-02,INV00485,283,31,32,284,VEND013,7,1,28,808,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-22,INV00486,410,7,43,446,VEND018,6,1,41,384,Stethoscope,Device,Medical Equipment,,Medication,False,False
+2025-08-26,INV00487,287,27,78,338,VEND006,3,3,34,770,Gauze 10x10cm,Bandage,Surgical,,Consumable,False,False
+2025-08-16,INV00488,118,4,11,125,VEND002,6,4,32,831,Face Mask,Device,Consumable,,Equipment,False,False
+2025-08-31,INV00489,79,31,67,0,VEND017,8,4,32,116,Antiseptic Solution,Liquid,Surgical,,Consumable,False,False
+2025-08-28,INV00490,121,3,66,184,VEND002,5,5,50,1000,Amoxicillin 250mg,Capsule,Antibiotic,,Consumable,False,False
+2025-08-27,INV00491,201,6,3,198,VEND006,8,5,30,367,Face Mask,Device,Consumable,,Consumable,False,False
+2025-08-12,INV00492,443,27,84,500,VEND012,3,5,39,384,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-22,INV00493,271,35,6,242,VEND001,4,2,37,294,Ibuprofen 200mg,Capsule,Pain Relief,,Medication,False,False
+2025-08-25,INV00494,488,42,58,504,VEND016,4,1,11,985,Ceftriaxone 1g,Injection,Antibiotic,,Medication,False,False
+2025-08-15,INV00495,268,46,70,292,VEND014,7,5,30,525,Ibuprofen 200mg,Capsule,Pain Relief,,Consumable,False,False
+2025-08-22,INV00496,440,31,17,426,VEND016,6,1,23,166,Syringe 5ml,Device,Consumable,,Medication,False,False
+2025-08-14,INV00497,161,46,17,132,VEND007,8,5,17,818,Gauze 10x10cm,Bandage,Surgical,,Medication,False,False
+2025-08-25,INV00498,312,34,1,42,VEND019,9,4,43,373,Surgical Cap,Device,Surgical,,Consumable,False,False
+2025-08-07,INV00499,525,46,57,40,VEND005,4,4,41,964,Surgical Cap,Device,Surgical,,Medication,False,False
+2025-08-25,INV00500,547,41,42,548,VEND008,8,4,10,550,Insulin 10ml,Injection,Diabetic,,Medication,False,False
