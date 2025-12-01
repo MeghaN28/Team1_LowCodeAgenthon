@@ -48,8 +48,9 @@ function Home() {
       })
   }, [])
 
-  // Filter and sort inventory for search & stock status selection
+  // Filter and sort inventory
   const filteredAndSortedInventory = useMemo(() => {
+    // 1️⃣ Filter by search term and stock status
     let filtered = inventory.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
       const status = getStockStatus(item)
@@ -58,6 +59,19 @@ function Home() {
       return matchesSearch && matchesStockStatus
     })
 
+    // 2️⃣ Remove duplicates by name if not 'All'
+    if (selectedStockStatus !== 'All') {
+      const seen = new Set()
+      filtered = filtered.filter(item => {
+        if (!seen.has(item.name.toLowerCase())) {
+          seen.add(item.name.toLowerCase())
+          return true
+        }
+        return false
+      })
+    }
+
+    // 3️⃣ Sort the filtered array
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -73,18 +87,6 @@ function Home() {
           return 0
       }
     })
-
-    // Apply uniqueness only if not 'All'
-    if (selectedStockStatus !== 'All') {
-      const seen = new Set()
-      filtered = filtered.filter(item => {
-        if (!seen.has(item.name)) {
-          seen.add(item.name)
-          return true
-        }
-        return false
-      })
-    }
 
     return filtered
   }, [inventory, searchTerm, selectedStockStatus, sortBy])

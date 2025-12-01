@@ -5,7 +5,7 @@ import pandas as pd
 # Create Flask app
 app = Flask(__name__)
 
-# Blueprint (optional)
+# Blueprint
 inventory_api = Blueprint('inventory_api', __name__)
 
 # Database connection
@@ -13,21 +13,23 @@ def get_db_connection():
     return psycopg2.connect(
         host="localhost",
         port="5432",
-        dbname="inventory_database",  # your db name
+        dbname="medical_inventory_db",
         user="meghanarendrasimha",
         password="Welcome@123"
     )
 
-# Compute stock status
+# Compute stock status safely
 def compute_stock_status(row):
-    if row['closing_stock'] == 0:
+    closing_stock = row.get('closing_stock') or 0
+    min_stock = row.get('min_stock') or 0
+    if closing_stock == 0:
         return 'out-of-stock'
-    elif row['closing_stock'] <= row['min_stock']:
+    elif closing_stock <= min_stock:
         return 'low-stock'
     else:
         return 'in-stock'
 
-# API route to fetch inventory
+# API route
 @inventory_api.route('/api/inventory', methods=['GET'])
 def get_inventory():
     try:
@@ -51,10 +53,20 @@ def get_inventory():
         df = pd.read_sql(query, conn)
         conn.close()
 
+        # Replace numeric NaN with 0
+        numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
+        df[numeric_cols] = df[numeric_cols].fillna(0)
+
+        # Replace non-numeric NaN with None
+        df = df.where(pd.notnull(df), None)
+
         # Compute stock status
         df['stock_status'] = df.apply(compute_stock_status, axis=1)
+
+        # Rename columns for frontend
         df.rename(columns={'closing_stock': 'current_stock'}, inplace=True)
 
+        # Convert to dict and return JSON
         items = df.to_dict(orient='records')
         return jsonify({"success": True, "items": items})
 

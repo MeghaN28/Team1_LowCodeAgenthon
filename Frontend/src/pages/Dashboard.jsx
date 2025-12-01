@@ -9,12 +9,8 @@ import ItemForecastModal from '../pages/ItemForecastModal';
 import './Dashboard.css';
 
 function Dashboard() {
-  // =========================
-  // Hooks (Top Level Only)
-  // =========================
   const { theme } = useTheme();
 
-  // Inventory state
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
@@ -22,54 +18,97 @@ function Dashboard() {
   const [newItem, setNewItem] = useState({ name: '', category: '', quantity: '', threshold: '' });
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // Search & Agent state
   const [selectedItemSearch, setSelectedItemSearch] = useState('');
-  const [selectedItemId, setSelectedItemId] = useState('');
-
   const [agentResponse, setAgentResponse] = useState(null);
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentError, setAgentError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentItem, setCurrentItem] = useState(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [parsedData, setParsedData] = useState(null);
 
-  // =========================
-  // Fetch Inventory
-  // =========================
+  // iGentic Config
+  const IGENTIC_ORCHESTRATOR_ID = "df6578f6-7485-4946-85d3-0c6c1fb9114e";
+  const IGENTIC_ENDPOINT_BASE = "https://container-hackathon-sk.salmonpebble-59bd07ab.eastus.azurecontainerapps.io/api/iGenticAutonomousAgent/Executor";
+  const IGENTIC_URL = `${IGENTIC_ENDPOINT_BASE}/${IGENTIC_ORCHESTRATOR_ID}`;
+  const IGENTIC_HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
+  };
+
+  // Parse text-only MCP response
+  const parseAgentResponse = (text, item) => {
+    if (!text) return { currentStock: item.quantity, reorderLevel: item.threshold, lowStock: false, actions: [] };
+
+    let currentStock = item.quantity;
+    let reorderLevel = item.threshold;
+    let lowStock = item.quantity <= item.threshold;
+    let actions = [];
+
+    const stockMatch = text.match(/Current Stock on Hand:\s*(\d+)/i);
+    if (stockMatch) currentStock = parseInt(stockMatch[1]);
+
+    const reorderMatch = text.match(/Minimum Stock Limit:\s*(\d+)/i);
+    if (reorderMatch) reorderLevel = parseInt(reorderMatch[1]);
+
+    const lowMatch = text.match(/Low-Stock Warning:\s*(Yes|No)/i);
+    lowStock = lowMatch ? lowMatch[1].toLowerCase() === "yes" : lowStock;
+
+    const actionBlock = text.match(/Recommended Actions:[\s\S]*/i);
+    if (actionBlock) {
+      actions = actionBlock[0]
+        .split("\n")
+        .filter((l) => l.trim().startsWith("-"))
+        .map((l) => l.replace("-", "").trim());
+    }
+
+    return { currentStock, reorderLevel, lowStock, actions };
+  };
+
+  // Fetch inventory
   useEffect(() => {
+    setLoading(true);
     fetch("http://127.0.0.1:8080/api/inventory")
       .then(res => res.json())
       .then(data => {
-        if (data.success) {
-          const formatted = data.items.map(item => ({
-            id: item.inventory_id,
-            name: item.item_name,
-            category: item.item_type || 'Unknown',
-            quantity: item.current_stock || item.initial_stock || 0,
-            threshold: item.min_stock || item.minimum_required || 0,
-            raw: item
-          }));
+        if (data.success && Array.isArray(data.items)) {
+          const seen = new Set();
+          const formatted = data.items
+            .filter(item => {
+              const normalized = item.item_name?.toLowerCase() ?? '';
+              if (seen.has(normalized)) return false;
+              seen.add(normalized);
+              return true;
+            })
+            .map(item => ({
+              id: item.inventory_id || `INV${Math.floor(Math.random()*100000)}`,
+              name: item.item_name || 'Unnamed Item',
+              category: item.item_type || item.category || 'Unknown',
+              quantity: item.current_stock ?? item.initial_stock ?? 0,
+              threshold: item.min_stock ?? item.minimum_required ?? 0,
+              raw: item
+            }));
           setInventory(formatted);
+        } else {
+          setInventory([]);
         }
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Failed to fetch inventory:", err);
+        setInventory([]);
         setLoading(false);
       });
   }, []);
 
-  // =========================
-  // Theme Colors
-  // =========================
   const chartColors = {
     dark: { bg: '#1e293b', border: '#334155', text: '#f1f5f9', textSecondary: '#cbd5e1', grid: '#334155' },
     light: { bg: '#ffffff', border: '#e2e8f0', text: '#1e293b', textSecondary: '#64748b', grid: '#e2e8f0' }
   };
-  const colors = chartColors[theme];
+  const colors = chartColors[theme] || chartColors.light;
 
-  // =========================
-  // Helper Functions
-  // =========================
   const getStockStatus = (item) => {
     if (item.quantity === 0) return 'out-of-stock';
     if (item.quantity <= item.threshold) return 'low-stock';
@@ -103,24 +142,16 @@ function Dashboard() {
 
   const categories = [...new Set(inventory.map(item => item.category))];
 
-  // =========================
-  // Derived / Memoized Data
-  // =========================
-  const filteredSearchItems = useMemo(() => {
-    if (!selectedItemSearch) return inventory;
-    return inventory.filter(item => item.name.toLowerCase().includes(selectedItemSearch.toLowerCase()));
+  const filteredInventory = useMemo(() => {
+    let data = inventory;
+    if (selectedItemSearch) {
+      data = data.filter(item => item.name.toLowerCase().includes(selectedItemSearch.toLowerCase()));
+    }
+    return data;
   }, [inventory, selectedItemSearch]);
 
-  const uniqueLowStock = useMemo(() => {
-    const seen = new Set();
-    return inventory.filter(item => {
-      if (item.quantity <= item.threshold && !seen.has(item.name)) {
-        seen.add(item.name);
-        return true;
-      }
-      return false;
-    });
-  }, [inventory]);
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const stats = {
     totalItems: inventory.length,
@@ -149,64 +180,21 @@ function Dashboard() {
     { name: 'Out of Stock', value: stats.outOfStock, color: '#ef4444' }
   ];
 
-  const consumptionData = [
-    { month: 'Jan', usage: 450 },
-    { month: 'Feb', usage: 520 },
-    { month: 'Mar', usage: 480 },
-    { month: 'Apr', usage: 610 },
-    { month: 'May', usage: 550 },
-    { month: 'Jun', usage: 680 }
-  ];
-
   const lowStockAlerts = inventory.filter(item => item.quantity <= item.threshold);
 
-  // =========================
-  // iGentic Agent Integration
-  // =========================
-  const IGENTIC_ORCHESTRATOR_ID = "df6578f6-7485-4946-85d3-0c6c1fb9114e";
-  const IGENTIC_ENDPOINT_BASE = "https://container-hackathon-sk.salmonpebble-59bd07ab.eastus.azurecontainerapps.io/api/iGenticAutonomousAgent/Executor";
-  const IGENTIC_URL = `${IGENTIC_ENDPOINT_BASE}/${IGENTIC_ORCHESTRATOR_ID}`;
-  const IGENTIC_HEADERS = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
-  };
-
-  const parseAgentResponse = (text, item) => {
-    let currentStock = item.quantity;
-    let reorderLevel = item.threshold;
-    let lowStock = item.quantity <= item.threshold;
-    let actions = [];
-
-    const stockMatch = text.match(/Current Stock on Hand:\s*(\d+)/i);
-    if (stockMatch) currentStock = parseInt(stockMatch[1]);
-
-    const reorderMatch = text.match(/reorder level of (\d+)/i);
-    if (reorderMatch) reorderLevel = parseInt(reorderMatch[1]);
-
-    const lowMatch = text.match(/Low-Stock Warning:\s*(Yes|No)/i);
-    lowStock = lowMatch ? lowMatch[1].toLowerCase() === "yes" : lowStock;
-
-    const actionBlock = text.match(/Recommended Actions:[\s\S]*/i);
-    if (actionBlock) {
-      actions = actionBlock[0]
-        .split("\n")
-        .filter((l) => l.trim().startsWith("-"))
-        .map((l) => l.replace("-", "").trim());
-    }
-
-    return { currentStock, reorderLevel, lowStock, actions };
-  };
-
+  // Send to iGentic Agent
   async function sendToAgent(item) {
     if (!item) return;
+    setCurrentItem(item);
     setAgentLoading(true);
     setAgentError(null);
     setAgentResponse(null);
     setShowModal(false);
     setParsedData(null);
-    setSelectedItemId(item.id);
 
     try {
+      console.log("Sending item to agent:", item);
+
       const payload = {
         UserInput: JSON.stringify({
           item_id: item.id,
@@ -245,12 +233,19 @@ function Dashboard() {
       }
 
       const data = await res.json();
+      console.log("Agent response:", data);
+
       if (data.session_id) localStorage.setItem("igentic_session", data.session_id);
+
       setAgentResponse(data);
 
-      const parsed = parseAgentResponse(data.result, item);
+      // Always parse data.result
+      const parsed = parseAgentResponse(data.result || "", item);
+      console.log("Parsed data:", parsed);
+
       setParsedData(parsed);
       setShowModal(true);
+
     } catch (err) {
       console.error(err);
       setAgentError(err.message || String(err));
@@ -259,53 +254,32 @@ function Dashboard() {
     }
   }
 
+  const handleSendToAgent = async (item) => {
+    await sendToAgent(item);
+  };
+
   if (loading) return <div className="loading">Loading inventory...</div>;
 
-  // =========================
-  // Render
-  // =========================
   return (
     <div className="dashboard-page">
-      {/* iGentic Response Panel */}
-      <div className="agent-response-panel">
-        <h3 className="section-title">Your SupplySoul Assistant</h3>
-        {agentError && <div className="agent-error">Error: {agentError}</div>}
-        {agentLoading && <div className="agent-loading">Waiting for agent response...</div>}
-        {agentResponse && (
-          <div className="agent-response-card">
-            <pre>{agentResponse.result || JSON.stringify(agentResponse, null, 2)}</pre>
-          </div>
-        )}
-      </div>
-
-      {/* Pop-up Modal */}
-      {showModal && parsedData && selectedItemId && (
-        <ItemForecastModal
-          item={inventory.find(i => i.id === selectedItemId)}
-          parsed={parsedData}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-
-      {/* Dashboard Header */}
       <div className="page-header" style={{ marginBottom: '1rem' }}>
         <h1 className="page-title">Dashboard</h1>
         <div className="agent-search-section" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <input
             type="text"
-            placeholder="Search item to send to agent..."
+            placeholder="Search item..."
             value={selectedItemSearch}
             onChange={e => setSelectedItemSearch(e.target.value)}
             style={{ padding: '0.5rem', width: '300px' }}
           />
           <button
             onClick={() => {
-              if (filteredSearchItems.length > 0) sendToAgent(filteredSearchItems[0]);
+              if (filteredInventory.length > 0) handleSendToAgent(filteredInventory[0]);
+              else alert("No item selected or available.");
             }}
-            style={{ padding: '0.5rem' }}
-            disabled={filteredSearchItems.length === 0 || agentLoading}
+            style={{ padding: '0.5rem 1rem', cursor: 'pointer', background: '#4facfe', color: 'white', borderRadius: '8px' }}
           >
-            {agentLoading ? 'Sending...' : 'Send to Agent'}
+            Send to Agent
           </button>
         </div>
       </div>
@@ -314,12 +288,10 @@ function Dashboard() {
       <ChartsSection
         categoryChartData={categoryChartData}
         statusData={statusData}
-        consumptionData={consumptionData}
         colors={colors}
       />
-      <LowStockAlerts lowStockAlerts={uniqueLowStock} />
+      <LowStockAlerts lowStockAlerts={lowStockAlerts} />
 
-      {/* Inventory Management */}
       <div className="management-section">
         <div className="section-header">
           <h2 className="section-title">Inventory Management</h2>
@@ -350,7 +322,7 @@ function Dashboard() {
         )}
 
         <InventoryTable
-          inventory={inventory}
+          inventory={paginatedInventory}
           editingId={editingId}
           editForm={editForm}
           setEditForm={setEditForm}
@@ -361,7 +333,39 @@ function Dashboard() {
           handleCancelEdit={handleCancelEdit}
           handleDelete={id => setInventory(inventory.filter(it => it.id !== id))}
         />
+
+        {totalPages > 1 && (
+          <div className="pagination-controls">
+            <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+              &lt; Prev
+            </button>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                className={currentPage === i + 1 ? 'active' : ''}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+              Next &gt;
+            </button>
+          </div>
+        )}
       </div>
+
+      {showModal && (
+        <ItemForecastModal
+          item={currentItem}
+          parsed={parsedData}
+          onClose={() => {
+            setShowModal(false);
+            setCurrentItem(null);
+            setParsedData(null);
+          }}
+        />
+      )}
     </div>
   );
 }

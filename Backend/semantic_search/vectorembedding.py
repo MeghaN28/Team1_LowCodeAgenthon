@@ -1,39 +1,47 @@
-from sentence_transformers import SentenceTransformer
 import psycopg2
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
-# Load 128-dimensional model
-model = SentenceTransformer('paraphrase-MiniLM-L3-v2')
-
-# Connect to PostgreSQL
+# ----------------------------
+# PostgreSQL connection
+# ----------------------------
 conn = psycopg2.connect(
     host="localhost",
     port="5432",
-    dbname="inventory_database",
+    dbname="medical_inventory_db",
     user="meghanarendrasimha",
     password="Welcome@123"
 )
 cur = conn.cursor()
 
-# Fetch inventory items
-cur.execute("SELECT inventory_id, item_name, item_type FROM inventory_master")
+# ----------------------------
+# Load embedding model
+# ----------------------------
+model = SentenceTransformer('paraphrase-MiniLM-L3-v2')  # 384-dim embeddings
+
+# ----------------------------
+# Fetch items without embeddings
+# ----------------------------
+cur.execute("""
+    SELECT inventory_id, item_name 
+    FROM inventory_master 
+    WHERE embedding IS NULL AND item_name ILIKE '%thermometer%'
+""")
 rows = cur.fetchall()
 
-for inv_id, name, type_ in rows:
-    text = f"{name} {type_ or ''}".strip()
-    emb = model.encode(text)
+for inv_id, item_name in rows:
+    # Generate embedding
+    emb = model.encode(item_name)
+    emb_list_str = '[' + ','.join([str(x) for x in emb.tolist()]) + ']'
 
-    # Safety check for dimension
-    if len(emb) != 384:
-        print(f"Skipping {text} due to dimension mismatch: {len(emb)}")
-        continue
-
-    # Use list directly; psycopg2 + pgvector accepts Python list
+    # Update DB
     cur.execute(
-        "UPDATE inventory_master SET embedding = %s WHERE inventory_id = %s",
-        (emb.tolist(), inv_id)
+        "UPDATE inventory_master SET embedding=%s WHERE inventory_id=%s",
+        (emb_list_str, inv_id)
     )
 
 conn.commit()
 cur.close()
 conn.close()
-print("Embeddings updated successfully.")
+
+print(f"Updated embeddings for {len(rows)} thermometer items.")
