@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2utzkdZISnxzzIRUEbpxrAOY0Ou0oayN5OcEhA4fhjVc4mt797HdIgfUWap5Ra3
+\restrict 6f0mkDcbAL2Dz2b6YYpfbYh6oGtlrcwk8kTMAy6cFUejEnb2pyBf94td1yU1X1v
 
 -- Dumped from database version 18.0 (Homebrew)
 -- Dumped by pg_dump version 18.0 (Homebrew)
@@ -43,7 +43,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.consumption (
     transaction_id text NOT NULL,
-    date date NOT NULL,
+    date date,
     inventory_id text,
     quantity_consumed integer,
     department text,
@@ -51,8 +51,7 @@ CREATE TABLE public.consumption (
     shift text,
     consumption_reason text,
     remaining_stock integer,
-    batch_lot text,
-    CONSTRAINT consumption_shift_check CHECK ((shift = ANY (ARRAY['Morning'::text, 'Afternoon'::text, 'Night'::text])))
+    batch_lot text
 );
 
 
@@ -72,39 +71,65 @@ CREATE TABLE public.finance (
     total_cost numeric,
     payment_status text,
     account_code text,
-    delivery_date date,
-    CONSTRAINT finance_payment_status_check CHECK ((payment_status = ANY (ARRAY['Paid'::text, 'Pending'::text, 'Overdue'::text])))
+    delivery_date date
 );
 
 
 ALTER TABLE public.finance OWNER TO meghanarendrasimha;
 
 --
--- Name: inventory_daily; Type: TABLE; Schema: public; Owner: meghanarendrasimha
+-- Name: inventory_master; Type: TABLE; Schema: public; Owner: meghanarendrasimha
 --
 
-CREATE TABLE public.inventory_daily (
-    record_id integer NOT NULL,
-    date date NOT NULL,
-    inventory_id text,
-    item_name text,
+CREATE TABLE public.inventory_master (
+    date date,
+    inventory_id text NOT NULL,
     opening_stock integer,
     quantity_consumed integer,
     quantity_restocked integer,
     closing_stock integer,
     vendor_id text,
     lead_time_days integer,
-    department_count integer
+    department_count integer,
+    min_stock integer,
+    max_capacity integer,
+    item_name text,
+    form text,
+    use text,
+    item_type text,
+    out_of_stock boolean,
+    low_stock boolean,
+    embedding public.vector(384)
 );
 
 
-ALTER TABLE public.inventory_daily OWNER TO meghanarendrasimha;
+ALTER TABLE public.inventory_master OWNER TO meghanarendrasimha;
 
 --
--- Name: inventory_daily_record_id_seq; Type: SEQUENCE; Schema: public; Owner: meghanarendrasimha
+-- Name: reorder_log; Type: TABLE; Schema: public; Owner: meghanarendrasimha
 --
 
-CREATE SEQUENCE public.inventory_daily_record_id_seq
+CREATE TABLE public.reorder_log (
+    log_id integer NOT NULL,
+    inventory_id text NOT NULL,
+    item_name text NOT NULL,
+    reorder_quantity integer NOT NULL,
+    current_stock integer NOT NULL,
+    status text NOT NULL,
+    email_recipient text,
+    email_subject text,
+    email_body text,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.reorder_log OWNER TO meghanarendrasimha;
+
+--
+-- Name: reorder_log_log_id_seq; Type: SEQUENCE; Schema: public; Owner: meghanarendrasimha
+--
+
+CREATE SEQUENCE public.reorder_log_log_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -113,59 +138,14 @@ CREATE SEQUENCE public.inventory_daily_record_id_seq
     CACHE 1;
 
 
-ALTER SEQUENCE public.inventory_daily_record_id_seq OWNER TO meghanarendrasimha;
+ALTER SEQUENCE public.reorder_log_log_id_seq OWNER TO meghanarendrasimha;
 
 --
--- Name: inventory_daily_record_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: meghanarendrasimha
+-- Name: reorder_log_log_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: meghanarendrasimha
 --
 
-ALTER SEQUENCE public.inventory_daily_record_id_seq OWNED BY public.inventory_daily.record_id;
+ALTER SEQUENCE public.reorder_log_log_id_seq OWNED BY public.reorder_log.log_id;
 
-
---
--- Name: inventory_department_mapping; Type: TABLE; Schema: public; Owner: meghanarendrasimha
---
-
-CREATE TABLE public.inventory_department_mapping (
-    inventory_id text,
-    vendor_id text,
-    department_code text,
-    department_name text,
-    lead_time_days integer,
-    min_stock_limit integer,
-    max_capacity integer,
-    team_member text,
-    team_member_email text,
-    manager text,
-    manager_email text
-);
-
-
-ALTER TABLE public.inventory_department_mapping OWNER TO meghanarendrasimha;
-
---
--- Name: inventory_master; Type: TABLE; Schema: public; Owner: meghanarendrasimha
---
-
-CREATE TABLE public.inventory_master (
-    inventory_id text NOT NULL,
-    item_type text,
-    item_name text NOT NULL,
-    vendor_id text,
-    lead_time_days integer,
-    avg_daily_consumption numeric,
-    minimum_required integer,
-    maximum_capacity integer,
-    initial_stock integer,
-    unit_cost numeric,
-    expiry_date date,
-    form text,
-    use text,
-    CONSTRAINT inventory_master_item_type_check CHECK ((item_type = ANY (ARRAY['Medication'::text, 'Consumable'::text, 'Equipment'::text])))
-);
-
-
-ALTER TABLE public.inventory_master OWNER TO meghanarendrasimha;
 
 --
 -- Name: vendor_master; Type: TABLE; Schema: public; Owner: meghanarendrasimha
@@ -177,18 +157,17 @@ CREATE TABLE public.vendor_master (
     contact_number text,
     default_lead_time_days integer,
     region text,
-    vendor_rating numeric,
-    CONSTRAINT vendor_master_vendor_rating_check CHECK (((vendor_rating >= (1)::numeric) AND (vendor_rating <= (5)::numeric)))
+    vendor_rating numeric
 );
 
 
 ALTER TABLE public.vendor_master OWNER TO meghanarendrasimha;
 
 --
--- Name: inventory_daily record_id; Type: DEFAULT; Schema: public; Owner: meghanarendrasimha
+-- Name: reorder_log log_id; Type: DEFAULT; Schema: public; Owner: meghanarendrasimha
 --
 
-ALTER TABLE ONLY public.inventory_daily ALTER COLUMN record_id SET DEFAULT nextval('public.inventory_daily_record_id_seq'::regclass);
+ALTER TABLE ONLY public.reorder_log ALTER COLUMN log_id SET DEFAULT nextval('public.reorder_log_log_id_seq'::regclass);
 
 
 --
@@ -208,19 +187,19 @@ ALTER TABLE ONLY public.finance
 
 
 --
--- Name: inventory_daily inventory_daily_pkey; Type: CONSTRAINT; Schema: public; Owner: meghanarendrasimha
---
-
-ALTER TABLE ONLY public.inventory_daily
-    ADD CONSTRAINT inventory_daily_pkey PRIMARY KEY (record_id);
-
-
---
 -- Name: inventory_master inventory_master_pkey; Type: CONSTRAINT; Schema: public; Owner: meghanarendrasimha
 --
 
 ALTER TABLE ONLY public.inventory_master
     ADD CONSTRAINT inventory_master_pkey PRIMARY KEY (inventory_id);
+
+
+--
+-- Name: reorder_log reorder_log_pkey; Type: CONSTRAINT; Schema: public; Owner: meghanarendrasimha
+--
+
+ALTER TABLE ONLY public.reorder_log
+    ADD CONSTRAINT reorder_log_pkey PRIMARY KEY (log_id);
 
 
 --
@@ -256,32 +235,8 @@ ALTER TABLE ONLY public.finance
 
 
 --
--- Name: inventory_daily inventory_daily_inventory_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: meghanarendrasimha
---
-
-ALTER TABLE ONLY public.inventory_daily
-    ADD CONSTRAINT inventory_daily_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES public.inventory_master(inventory_id);
-
-
---
--- Name: inventory_daily inventory_daily_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: meghanarendrasimha
---
-
-ALTER TABLE ONLY public.inventory_daily
-    ADD CONSTRAINT inventory_daily_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendor_master(vendor_id);
-
-
---
--- Name: inventory_master inventory_master_vendor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: meghanarendrasimha
---
-
-ALTER TABLE ONLY public.inventory_master
-    ADD CONSTRAINT inventory_master_vendor_id_fkey FOREIGN KEY (vendor_id) REFERENCES public.vendor_master(vendor_id);
-
-
---
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2utzkdZISnxzzIRUEbpxrAOY0Ou0oayN5OcEhA4fhjVc4mt797HdIgfUWap5Ra3
+\unrestrict 6f0mkDcbAL2Dz2b6YYpfbYh6oGtlrcwk8kTMAy6cFUejEnb2pyBf94td1yU1X1v
 
