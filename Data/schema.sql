@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6f0mkDcbAL2Dz2b6YYpfbYh6oGtlrcwk8kTMAy6cFUejEnb2pyBf94td1yU1X1v
+\restrict hbqC2SvHU0L2Su93WrRBlybRJnLdWKBYOaooycqarzkkbG7cCfgXDBBISHv3Uke
 
 -- Dumped from database version 18.0 (Homebrew)
 -- Dumped by pg_dump version 18.0 (Homebrew)
@@ -238,5 +238,5 @@ ALTER TABLE ONLY public.finance
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6f0mkDcbAL2Dz2b6YYpfbYh6oGtlrcwk8kTMAy6cFUejEnb2pyBf94td1yU1X1v
+\unrestrict hbqC2SvHU0L2Su93WrRBlybRJnLdWKBYOaooycqarzkkbG7cCfgXDBBISHv3Uke
 
