@@ -25,7 +25,12 @@ from email.mime.multipart import MIMEMultipart
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-
+import io
+import pdfplumber
+from PIL import Image
+import pytesseract
+from datetime import datetime
+import uuid
 # ----------------------------
 # Initialize MCP
 # ----------------------------
@@ -141,10 +146,20 @@ def fetch_inventory_data(item_ids):
 # ----------------------------
 def forecast_item(item_ids, periods: int = 7):
     forecasts = []
+    today = pd.Timestamp.today().normalize()
     for iid in item_ids:
-        cur.execute("SELECT quantity_consumed FROM consumption WHERE inventory_id=%s ORDER BY date DESC LIMIT 7", (iid,))
+        # Fetch last 7 days including today
+        cur.execute("""
+            SELECT date, quantity_consumed 
+            FROM consumption 
+            WHERE inventory_id=%s AND date >= %s
+            ORDER BY date ASC
+        """, (iid, today - pd.Timedelta(days=6)))  # last 7 days including today
         rows = cur.fetchall()
-        avg_consumption = np.mean([float(r[0] or 0) for r in rows]) if rows else 2.0
+
+        # Map date -> quantity for existing rows
+        daily_consumption = {r[0]: float(r[1] or 0) for r in rows}
+        avg_consumption = np.mean(list(daily_consumption.values())) if daily_consumption else 2.0
 
         cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
         row = cur.fetchone()
@@ -152,10 +167,12 @@ def forecast_item(item_ids, periods: int = 7):
         min_stock_limit = float(row[1]) if row and row[1] is not None else 10.0
 
         for day in range(periods):
-            y_pred = avg_consumption * (1 + 0.05*np.sin(day))
+            date = (today + pd.Timedelta(days=day)).date()
+            consumed_today = daily_consumption.get(date, avg_consumption)
+            y_pred = consumed_today * (1 + 0.05*np.sin(day))
             stock_warning = (available_stock - y_pred) < min_stock_limit
             forecasts.append({
-                "Date": (pd.Timestamp.today() + pd.Timedelta(days=day+1)).strftime("%Y-%m-%d"),
+                "Date": date.strftime("%Y-%m-%d"),
                 "Inventory_ID": iid,
                 "Predicted_Consumption": round(y_pred, 2),
                 "Available_Stock": round(available_stock,2),
@@ -258,12 +275,24 @@ def predict_demand(item_name: str):
     item_ids = [iid for iid,_ in resolved_list]
     return forecast_item(item_ids)
 
+
 @mcp.tool
 def reorder_item(item_name: str, reorder_quantity: int = 10):
     """
-    Reorder an item and send an email notification via Gmail API (OAuth2).
-    Logs the reorder in the reorder_log table.
+    MCP wrapper: Calls reusable reorder function.
     """
+    return process_reorder(item_name, reorder_quantity)
+
+def process_reorder(item_name: str, reorder_quantity: int = 10):
+    """
+    Core logic for reordering an item:
+    - Resolve inventory ID
+    - Get stock
+    - Send email
+    - Insert log
+    Returns a result dict.
+    """
+
     resolved_list = resolve_inventory_ids(item_name)
     if not resolved_list:
         return {"error": f"Inventory '{item_name}' not found"}
@@ -275,7 +304,7 @@ def reorder_item(item_name: str, reorder_quantity: int = 10):
     row = cur.fetchone()
     current_stock = int(row[0]) if row and row[0] is not None else 0
 
-    # Compose email
+    # Prepare email
     recipient = "n.megha82@gmail.com"
     subject = f"Reorder Alert: {item_name}"
     body = f"""
@@ -288,42 +317,16 @@ def reorder_item(item_name: str, reorder_quantity: int = 10):
     This is an automated notification from the Inventory MCP system.
     """
 
-    # Prepare Gmail API message
-    message = MIMEMultipart()
-    message['to'] = recipient
-    message['subject'] = subject
-    message.attach(MIMEText(body, 'plain'))
-    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+    # Send email
+    email_status = send_reorder_email(recipient, subject, body)
 
-    email_status = ""
-    try:
-        # OAuth flow (reuse your credentials.json)
-        SCOPES = ['https://www.googleapis.com/auth/gmail.send']
-        creds = None
-        if os.path.exists('token.json'):
-            with open('token.json', 'rb') as token_file:
-                creds = pickle.load(token_file)
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file('client_secret_2_573959129688-mef2hfbg4k6bu0b2e91to9s68681e4rs.apps.googleusercontent.com.json', SCOPES)
-                creds = flow.run_local_server(port=0)
-            with open('token.json', 'wb') as token_file:
-                pickle.dump(creds, token_file)
-
-        service = build('gmail', 'v1', credentials=creds)
-        send_message = {'raw': raw_message}
-        service.users().messages().send(userId='me', body=send_message).execute()
-        email_status = "Email Sent"
-    except Exception as e:
-        email_status = f"Email Failed: {str(e)}"
-
-    # Log into reorder_log
+    # Insert into reorder_log
     cur.execute("""
-        INSERT INTO reorder_log (inventory_id, item_name, reorder_quantity, current_stock, status, email_recipient, email_subject, email_body)
+        INSERT INTO reorder_log 
+        (inventory_id, item_name, reorder_quantity, current_stock, status, email_recipient, email_subject, email_body)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
     """, (iid, item_name, reorder_quantity, current_stock, email_status, recipient, subject, body))
+    
     conn.commit()
 
     return {
@@ -332,8 +335,217 @@ def reorder_item(item_name: str, reorder_quantity: int = 10):
         "Current_Stock": current_stock,
         "Reorder_Quantity": reorder_quantity,
         "Email_Status": email_status,
-        "Message": "Reorder logged and email sent via OAuth"
+        "Message": "Reorder logged and email processed"
     }
+
+
+# Folder path for receipts
+def send_reorder_email(recipient: str, subject: str, body: str):
+    """
+    Sends an email using Gmail API OAuth2.
+    Returns a status string.
+    """
+
+    # Prepare Gmail API MIME message
+    message = MIMEMultipart()
+    message['to'] = recipient
+    message['subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
+    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+    try:
+        # Gmail API scopes
+        SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+        creds = None
+
+        # Load saved OAuth credentials
+        if os.path.exists('token.json'):
+            with open('token.json', 'rb') as token_file:
+                creds = pickle.load(token_file)
+
+        # If expired / no token → re-authenticate
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'client_secret_2_573959129688-mef2hfbg4k6bu0b2e91to9s68681e4rs.apps.googleusercontent.com.json', 
+                    SCOPES
+                )
+                creds = flow.run_local_server(port=0)
+
+            # Save refreshed token
+            with open('token.json', 'wb') as token_file:
+                pickle.dump(creds, token_file)
+
+        # Build Gmail service and send email
+        service = build('gmail', 'v1', credentials=creds)
+        send_message = {'raw': raw_message}
+        service.users().messages().send(userId='me', body=send_message).execute()
+
+        return "Email Sent"
+
+    except Exception as e:
+        return f"Email Failed: {str(e)}"
+
+@mcp.tool
+def process_receipts_folder():
+    """
+    Processes receipts in ~/Documents/receipts, updates inventory_master and consumption table,
+    and automatically triggers reorder if stock is low or 0.
+    """
+    RECEIPTS_FOLDER = os.path.expanduser("~/Documents/receipts")
+    os.makedirs(RECEIPTS_FOLDER, exist_ok=True)
+
+    today = datetime.today().date()
+    all_results = []
+
+    files = [f for f in os.listdir(RECEIPTS_FOLDER) if f.lower().endswith(('png','jpg','jpeg','pdf'))]
+
+    for filename in files:
+        file_path = os.path.join(RECEIPTS_FOLDER, filename)
+        text = ""
+
+        # -----------------------------
+        # EXTRACT TEXT FROM FILE
+        # -----------------------------
+        try:
+            if filename.lower().endswith(('png','jpg','jpeg')):
+                img = Image.open(file_path)
+                text = pytesseract.image_to_string(img)
+
+            elif filename.lower().endswith('pdf'):
+                with pdfplumber.open(file_path) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text += page_text + "\n"
+
+            else:
+                all_results.append({"filename": filename, "error": "Unsupported file type"})
+                continue
+
+        except Exception as e:
+            all_results.append({"filename": filename, "error": str(e)})
+            continue
+
+
+        # -----------------------------
+        # PARSE ITEMS
+        # -----------------------------
+        items = []
+        for line in text.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            match = re.match(r'(.+?)[\s:-]+(\d+)', line)
+            if match:
+                items.append({
+                    "name": match.group(1).strip(),
+                    "quantity": int(match.group(2))
+                })
+
+        if not items:
+            all_results.append({"filename": filename, "error": "No items found"})
+            continue
+
+
+        receipt_results = []
+        for item in items:
+            name = item["name"]
+            qty = item["quantity"]
+
+            resolved_list = resolve_inventory_ids(name)
+            if not resolved_list:
+                receipt_results.append({"item": name, "quantity": qty, "status": "Item not found"})
+                continue
+
+            iid = resolved_list[0][0]
+
+            # -----------------------------
+            # CURRENT + MIN STOCK
+            # -----------------------------
+            cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+            row = cur.fetchone()
+
+            current_stock = float(row[0]) if row and row[0] is not None else 0
+            min_stock = float(row[1] or 10)
+
+            new_stock = max(0.0, current_stock - qty)
+
+            # Update inventory_master
+            cur.execute("UPDATE inventory_master SET closing_stock=%s WHERE inventory_id=%s",
+                        (new_stock, iid))
+
+
+            # -----------------------------
+            # INSERT INTO consumption
+            # -----------------------------
+            transaction_id = str(uuid.uuid4())
+
+            department = "General"
+            staff_id = "SYSTEM"
+            shift = "Morning"
+            consumption_reason = "Purchase Receipt"
+            batch_lot = None
+
+            cur.execute(
+                """
+                INSERT INTO consumption
+                (transaction_id, inventory_id, quantity_consumed, date,
+                 department, staff_id, shift, consumption_reason, 
+                 remaining_stock, batch_lot)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    transaction_id, iid, qty, today,
+                    department, staff_id, shift, consumption_reason,
+                    new_stock, batch_lot
+                )
+            )
+            conn.commit()
+
+
+            # -----------------------------
+            # STOCK STATUS + AUTO-REORDER
+            # -----------------------------
+            stock_status = (
+                "In Stock" if new_stock > min_stock
+                else "Low Stock" if new_stock > 0
+                else "Out of Stock"
+            )
+
+            reorder_triggered = None
+
+            if stock_status in ("Low Stock", "Out of Stock"):
+                reorder_triggered = process_reorder(name, reorder_quantity=10)
+
+
+            receipt_results.append({
+                "item": name,
+                "quantity_consumed": qty,
+                "Previous_Stock": current_stock,
+                "Updated_Stock": new_stock,
+                "Stock_Status": stock_status,
+                "Reorder_Triggered": reorder_triggered
+            })
+
+
+        all_results.append({
+            "filename": filename,
+            "processed_items": receipt_results
+        })
+
+
+        # Delete processed file
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            all_results.append({"filename": filename, "delete_error": str(e)})
+
+
+    return {"success": True, "receipts_summary": all_results}
 
 # ----------------------------
 # Run MCP Server

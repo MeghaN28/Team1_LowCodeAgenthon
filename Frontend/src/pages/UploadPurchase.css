@@ -1,0 +1,97 @@
+.upload-page {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.upload-container {
+  width: 100%;
+  max-width: 900px;
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.upload-section {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  transition: background 0.2s;
+}
+
+button:disabled {
+  background-color: #a5b4fc;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  background-color: #1e40af;
+}
+
+.error-msg {
+  color: red;
+  margin-top: 1rem;
+}
+
+.uploaded-files {
+  margin-top: 1rem;
+}
+
+.uploaded-files ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+
+.orchestrator-response {
+  margin-top: 2rem;
+}
+
+.receipt-card {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.receipt-card h4 {
+  margin-bottom: 0.5rem;
+}
+
+.receipt-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipt-card th,
+.receipt-card td {
+  border: 1px solid #d1d5db;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.receipt-card th {
+  background-color: #e5e7eb;
+}
+
+.beautified-response {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #eef2f7;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Courier New', Courier, monospace;
+}
