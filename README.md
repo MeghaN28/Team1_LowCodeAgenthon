@@ -206,4 +206,4 @@ Version Control
 	GitHub
 	Code management
 
-![alt text](Screenshot 2025-12-05 at 11.39.04 AM-1.png) ![alt text](<Screenshot 2025-12-05 at 11.39.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.40 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.05 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.55 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.39 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.54.44 AM.png>)
+![alt text](<Screenshot 2025-12-05 at 11.39.04 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.40 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.05 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.55 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.39 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.54.44 AM.png>)
