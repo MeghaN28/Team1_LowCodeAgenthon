@@ -3,17 +3,19 @@ import os
 import subprocess
 import uuid
 import tempfile
-from flask import Blueprint, request, send_file, jsonify
 import shutil
+from flask import Blueprint, request, send_file, jsonify
+from flask_cors import cross_origin
 
 tts_bp = Blueprint("tts_bp", __name__)
 
-@tts_bp.route("/tts", methods=["POST"])
+@tts_bp.route("/tts", methods=["POST", "OPTIONS"])
+@cross_origin()   # IMPORTANT FIX: Enables CORS for this route
 def tts_endpoint():
-    """
-    POST JSON: { "text": "Hello world" }
-    Returns: audio/wav file
-    """
+    # Handle CORS preflight automatically
+    if request.method == "OPTIONS":
+        return jsonify({"status": "OK"}), 200
+
     data = request.get_json(silent=True)
     if not data or "text" not in data:
         return jsonify({"error": "No text provided"}), 400
@@ -22,11 +24,9 @@ def tts_endpoint():
     if not text:
         return jsonify({"error": "Empty text"}), 400
 
-    # Confirm macOS utilities are available
+    # Ensure macOS utilities exist
     if not shutil.which("say") or not shutil.which("afconvert"):
-        return jsonify({
-            "error": "TTS requires macOS 'say' and 'afconvert' utilities."
-        }), 500
+        return jsonify({"error": "macOS 'say' or 'afconvert' missing"}), 500
 
     temp_dir = tempfile.gettempdir()
     uid = uuid.uuid4().hex
@@ -35,11 +35,18 @@ def tts_endpoint():
 
     try:
         subprocess.check_call(["say", "-o", aiff_path, text])
+
         subprocess.check_call([
-            "afconvert", "-f", "WAVE", "-d", "LEI16@22050", aiff_path, wav_path
+            "afconvert", "-f", "WAVE", "-d", "LEI16@22050",
+            aiff_path, wav_path
         ])
-        return send_file(wav_path, mimetype="audio/wav", as_attachment=False,
-                         download_name="assistant.wav")
+
+        return send_file(
+            wav_path,
+            mimetype="audio/wav",
+            as_attachment=False,
+            download_name="speech.wav"
+        )
 
     except subprocess.CalledProcessError as e:
         return jsonify({"error": f"TTS process failed: {e}"}), 500

@@ -7,17 +7,17 @@ import './Chatbot.css'
 function Chatbot() {
   const [messages, setMessages] = useState([
     {
-      id: 1,
+      id: crypto.randomUUID(),
       text: "Hello! I'm your SupplySoul assistant. Ask me about stock levels, item details, or search for specific medications.",
       sender: 'bot',
       timestamp: new Date()
     }
   ])
-
   const [inputText, setInputText] = useState('')
   const [isListening, setIsListening] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [agentError, setAgentError] = useState(null)
+  const [mode, setMode] = useState('text') // 'text' or 'voice'
 
   const messagesEndRef = useRef(null)
   const recognitionRef = useRef(null)
@@ -31,84 +31,20 @@ function Chatbot() {
     "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   }
 
+  const responseCacheRef = useRef({})
+
+  // -------------------------
   // Auto-scroll
+  // -------------------------
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   // -------------------------
-  // SEND TO AGENT
-  // -------------------------
-  const sendToAgent = async (text, isControlCommand = false) => {
-    if (!text?.trim()) return
-    setIsProcessing(true)
-    setAgentError(null)
-
-    setMessages(prev => [
-      ...prev,
-      { id: prev.length + 1, text, sender: 'user', timestamp: new Date() }
-    ])
-
-    const sessionIdToUse = localStorage.getItem("igentic_chat_session") || ""
-
-    const payload = {
-      UserInput: text,   // ✅ FIXED — removed JSON.stringify({prompt})
-      sessionId: sessionIdToUse,
-      executionId: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-      connectionID: "react-chatbot",
-      isImage: false,
-      base64string: "",
-      evalId: "",
-      userInputType: isControlCommand ? "control" : "text"
-    }
-
-    try {
-      const res = await fetch(IGENTIC_URL, {
-        method: 'POST',
-        headers: IGENTIC_HEADERS,
-        body: JSON.stringify(payload)
-      })
-
-      if (!res.ok) throw new Error(`iGentic error: ${res.status}`)
-
-      const data = await res.json()
-      if (data.session_id) localStorage.setItem("igentic_chat_session", data.session_id)
-
-      const botMessageText = data.result || "No response from agent."
-
-      setMessages(prev => [
-        ...prev,
-        { id: prev.length + 1, text: botMessageText, sender: 'bot', timestamp: new Date() }
-      ])
-
-      localStorage.setItem("last_bot_message", botMessageText)
-
-      await playBotAudio(botMessageText)
-
-    } catch (err) {
-      console.error(err)
-      setAgentError(err.message)
-      setMessages(prev => [
-        ...prev,
-        { id: prev.length + 1, text: `Error: ${err.message}`, sender: 'bot', timestamp: new Date() }
-      ])
-    }
-
-    setIsProcessing(false)
-  }
-
-  const handleSendMessage = (text = inputText) => {
-    if (!text.trim() || isProcessing) return
-    setInputText('')
-    sendToAgent(text)
-  }
-
-  // -------------------------
-  // SPEECH-TO-TEXT
+  // Initialize Speech Recognition
   // -------------------------
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) return
 
     const recog = new SpeechRecognition()
@@ -132,22 +68,98 @@ function Chatbot() {
         return
       }
 
-      setTimeout(() => handleSendMessage(transcript), 150)
+      if (mode === 'voice') setTimeout(() => handleSendMessage(transcript), 150)
     }
 
     recog.onerror = () => setIsListening(false)
     recog.onend = () => setIsListening(false)
 
     recognitionRef.current = recog
+  }, [mode])
+
+  // -------------------------
+  // Cleanup audio on unmount or navigation
+  // -------------------------
+  useEffect(() => {
+    return () => stopAudio()
   }, [])
 
   // -------------------------
-  // MIC BUTTON
+  // SEND MESSAGE TO AGENT
+  // -------------------------
+  // -------------------------
+// SEND MESSAGE TO AGENT
+// -------------------------
+const sendToAgent = async (text, isControlCommand = false) => {
+  if (!text?.trim()) return
+  setIsProcessing(true)
+  setAgentError(null)
+
+  // Add user message to chat
+  setMessages(prev => [
+    ...prev,
+    { id: crypto.randomUUID(), text, sender: 'user', timestamp: new Date() }
+  ])
+
+  // Always treat as live query: fetch fresh data
+  const sessionIdToUse = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()
+
+  const payload = {
+    UserInput: text,
+    sessionId: sessionIdToUse,
+    executionId: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+    connectionID: "react-chatbot",
+    isImage: false,
+    base64string: "",
+    evalId: "",
+    userInputType: isControlCommand ? "control" : "text"
+  }
+
+  try {
+    const res = await fetch(IGENTIC_URL, {
+      method: 'POST',
+      headers: IGENTIC_HEADERS,
+      body: JSON.stringify(payload)
+    })
+    if (!res.ok) throw new Error(`iGentic error: ${res.status}`)
+
+    const data = await res.json()
+    const botMessageText = data.result || "No response from agent."
+
+    // Always add fresh response to chat
+    setMessages(prev => [
+      ...prev,
+      { id: crypto.randomUUID(), text: botMessageText, sender: 'bot', timestamp: new Date() }
+    ])
+
+    localStorage.setItem("last_bot_message", botMessageText)
+    if (mode === 'voice') await playBotAudio(botMessageText)
+
+  } catch (err) {
+    console.error(err)
+    setAgentError(err.message)
+    setMessages(prev => [
+      ...prev,
+      { id: crypto.randomUUID(), text: `Error: ${err.message}`, sender: 'bot', timestamp: new Date() }
+    ])
+  }
+
+  setIsProcessing(false)
+}
+
+
+  const handleSendMessage = (text = inputText) => {
+    if (!text.trim() || isProcessing) return
+    setInputText('')
+    sendToAgent(text)
+  }
+
+  // -------------------------
+  // MIC BUTTON / VOICE MODE
   // -------------------------
   const toggleVoiceInput = () => {
-    if (audioRef.current) {
-      stopAudio()
-    }
+    if (audioRef.current) stopAudio()
+    if (mode !== 'voice') return
 
     if (!recognitionRef.current) {
       alert("Speech recognition not supported.")
@@ -167,23 +179,20 @@ function Chatbot() {
   // TEXT-TO-SPEECH
   // -------------------------
   const playBotAudio = async (text) => {
+    if (mode !== 'voice') return
     try {
       stopAudio()
-
       const res = await fetch("http://localhost:8080/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text })
       })
-
       if (!res.ok) return console.error("TTS error")
 
       const audioBlob = await res.blob()
       const audioUrl = URL.createObjectURL(audioBlob)
-
       const audio = new Audio(audioUrl)
       audioRef.current = audio
-
       audio.play().catch(() => console.warn("Autoplay blocked"))
     } catch (err) {
       console.error("TTS failure:", err)
@@ -196,17 +205,20 @@ function Chatbot() {
       audioRef.current.currentTime = 0
       audioRef.current = null
     }
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    }
   }
 
   const sendControlToAgent = async (command, context) => {
     const payload = {
-      UserInput: command,      // ✅ FIXED HERE ALSO
+      UserInput: command,
       sessionId: localStorage.getItem("igentic_chat_session") || "",
       executionId: crypto.randomUUID || Date.now().toString(),
       connectionID: "react-chatbot",
       isControlCommand: true
     }
-
     try {
       await fetch(IGENTIC_URL, {
         method: 'POST',
@@ -241,6 +253,12 @@ function Chatbot() {
     <div className="chatbot-page-chatgpt">
       <div className="chat-container-chatgpt">
 
+        {/* Mode Selector */}
+        <div style={{ marginBottom: '10px' }}>
+          <button onClick={() => setMode('text')} disabled={mode === 'text'}>Text Mode</button>
+          <button onClick={() => setMode('voice')} disabled={mode === 'voice'}>Voice Mode</button>
+        </div>
+
         {messages.length === 1 && (
           <WelcomeScreen
             quickQuestions={quickQuestions}
@@ -254,15 +272,25 @@ function Chatbot() {
           messagesEndRef={messagesEndRef}
         />
 
-        <ChatInput
-          inputText={inputText}
-          setInputText={setInputText}
-          handleKeyPress={handleKeyPress}
-          handleVoiceInput={toggleVoiceInput}
-          isListening={isListening}
-          handleSendMessage={handleSendMessage}
-          isProcessing={isProcessing}
-        />
+        {mode === 'text' && (
+          <ChatInput
+            inputText={inputText}
+            setInputText={setInputText}
+            handleKeyPress={handleKeyPress}
+            handleVoiceInput={toggleVoiceInput} // optional
+            isListening={isListening}
+            handleSendMessage={handleSendMessage}
+            isProcessing={isProcessing}
+          />
+        )}
+
+        {mode === 'voice' && (
+          <div style={{ textAlign: 'center', margin: '10px' }}>
+            <button onClick={toggleVoiceInput}>
+              {isListening ? "Stop Listening" : "Start Listening"}
+            </button>
+          </div>
+        )}
 
         {agentError && (
           <div className="agent-error">Agent Error: {agentError}</div>

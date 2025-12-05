@@ -13,16 +13,23 @@ export default function PurchaseUpload() {
   const IGENTIC_URL = `${IGENTIC_ENDPOINT_BASE}/${AGENT_ID}`;
   const IGENTIC_HEADERS = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer YOUR_IGENTIC_TOKEN"  // replace with your token
+    "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   };
 
+  // -------------------------
+  // Handle file selection
+  // -------------------------
   const handleFileChange = (e) => {
-    setFiles([...e.target.files]);
+    const newFiles = Array.from(e.target.files);
+    setFiles(prevFiles => [...prevFiles, ...newFiles]); // merge with previous
     setUploadedFiles([]);
     setError(null);
     setAgentResponse(null);
   };
 
+  // -------------------------
+  // Upload & trigger agent
+  // -------------------------
   const handleUpload = async () => {
     if (files.length === 0) return;
 
@@ -32,7 +39,7 @@ export default function PurchaseUpload() {
     setAgentResponse(null);
 
     const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
+    files.forEach(file => formData.append("files", file));
 
     try {
       // Upload files
@@ -40,8 +47,8 @@ export default function PurchaseUpload() {
         method: "POST",
         body: formData
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!data.success) {
         setError(data.error || "Upload failed");
         return;
@@ -79,7 +86,9 @@ Return a summary per receipt, including items processed, quantities consumed, up
     }
   };
 
-  // Helper to render receipt summaries nicely
+  // -------------------------
+  // Render receipts summary
+  // -------------------------
   const renderReceipts = () => {
     if (!agentResponse?.success || !agentResponse.receipts_summary) return null;
 
@@ -132,6 +141,17 @@ Return a summary per receipt, including items processed, quantities consumed, up
             {loading ? "Uploading & Triggering Agent..." : "Upload & Process"}
           </button>
         </div>
+
+        {files.length > 0 && (
+          <div className="selected-files">
+            <h3>Selected Files ({files.length}):</h3>
+            <ul>
+              {files.map((f, idx) => (
+                <li key={idx}>{f.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {error && <p className="error-msg">{error}</p>}
 

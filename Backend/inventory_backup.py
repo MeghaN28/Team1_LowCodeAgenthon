@@ -7,7 +7,7 @@ import pandas as pd
 conn = psycopg2.connect(
     host="localhost",
     port="5432",
-    dbname="inventory_database",
+    dbname="medical_inventory_db",
     user="meghanarendrasimha",
     password="Welcome@123"
 )

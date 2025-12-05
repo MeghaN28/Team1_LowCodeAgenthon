@@ -4,10 +4,10 @@ from datetime import datetime
 
 # Receipt items
 receipts = [
-    ("Alcohol Swab", 2),
-    ("Amoxicillin 250mg", 3),
-    ("Azithromycin 250mg", 3),
-    ("Thermometer", 3)
+    ("thermometer", 2),
+    ("Atorvastatin 20mg", 3),
+    ("Bandage Roll 5cm", 3),
+    ("Sterile Head Cap", 3)
 ]
 
 # Today's date

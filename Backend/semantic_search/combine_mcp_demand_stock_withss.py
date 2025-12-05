@@ -31,6 +31,7 @@ from PIL import Image
 import pytesseract
 from datetime import datetime
 import uuid
+from datetime import date
 # ----------------------------
 # Initialize MCP
 # ----------------------------
@@ -144,21 +145,24 @@ def fetch_inventory_data(item_ids):
 # ----------------------------
 # Forecast consumption
 # ----------------------------
+import pandas as pd
+import numpy as np
+
 def forecast_item(item_ids, periods: int = 7):
     forecasts = []
     today = pd.Timestamp.today().normalize()
     for iid in item_ids:
-        # Fetch last 7 days including today
         cur.execute("""
             SELECT date, quantity_consumed 
             FROM consumption 
             WHERE inventory_id=%s AND date >= %s
             ORDER BY date ASC
-        """, (iid, today - pd.Timedelta(days=6)))  # last 7 days including today
+        """, (iid, today - pd.Timedelta(days=6)))
         rows = cur.fetchall()
 
-        # Map date -> quantity for existing rows
+        # Fix: r[0] might already be a date
         daily_consumption = {r[0]: float(r[1] or 0) for r in rows}
+
         avg_consumption = np.mean(list(daily_consumption.values())) if daily_consumption else 2.0
 
         cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
@@ -175,7 +179,7 @@ def forecast_item(item_ids, periods: int = 7):
                 "Date": date.strftime("%Y-%m-%d"),
                 "Inventory_ID": iid,
                 "Predicted_Consumption": round(y_pred, 2),
-                "Available_Stock": round(available_stock,2),
+                "Available_Stock": round(available_stock, 2),
                 "Stock_Warning": stock_warning
             })
             available_stock = max(0.0, available_stock - y_pred)
@@ -187,14 +191,47 @@ def forecast_item(item_ids, periods: int = 7):
 def recommend_alternatives(item_name: str, top_k: int = 3):
     seen = set()
     alternatives = []
-    for iid, score in semantic_search(item_name, top_k=top_k):
-        cur.execute("SELECT item_name, closing_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+
+    # 1️⃣ Exact match
+    cur.execute(
+        "SELECT item_name, closing_stock FROM inventory_master WHERE LOWER(item_name)=LOWER(%s)",
+        (item_name,)
+    )
+    row = cur.fetchone()
+    if row and row[1] > 0:
+        return [row[0]]
+
+    # 2️⃣ Form + Use + Type check for general queries
+    cur.execute(
+        """
+        SELECT item_name, closing_stock 
+        FROM inventory_master 
+        WHERE LOWER(form)='tablet' AND LOWER(use) LIKE %s AND closing_stock > 0
+        """,
+        (f"%{item_name.lower()}%",)
+    )
+    rows = cur.fetchall()
+    for row in rows:
+        if row[0] not in seen:
+            alternatives.append(row[0])
+            seen.add(row[0])
+
+    # 3️⃣ Semantic search fallback
+    for iid, score in semantic_search(item_name, top_k=top_k, threshold=0.5):
+        cur.execute(
+            "SELECT item_name, closing_stock FROM inventory_master WHERE inventory_id=%s", 
+            (iid,)
+        )
         row = cur.fetchone()
-        if row and row[1] > 0:
-            name = row[0]
-            if name not in seen:
+        if row:
+            name, stock = row
+            if stock > 0 and name not in seen:
                 alternatives.append(name)
                 seen.add(name)
+
+    if not alternatives:
+        return f"No alternatives available for '{item_name}' in stock."
+
     return alternatives
 
 # ----------------------------
@@ -234,25 +271,57 @@ def check_stock(item_name: str):
     return results
 
 @mcp.tool
+
 def update_inventory_after_purchase(item_name: str, quantity_purchased: float):
-    if quantity_purchased <= 0: return {"error": "Invalid quantity"}
+    if quantity_purchased <= 0:
+        return {"error": "Invalid quantity"}
+
+    # Resolve inventory ID from name
     resolved_list = resolve_inventory_ids(item_name)
-    if not resolved_list: return {"error": f"Inventory '{item_name}' not found"}
+    if not resolved_list:
+        return {"error": f"Inventory '{item_name}' not found"}
 
     iid = resolved_list[0][0]
+
+    # Get current stock and minimum stock
     cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
     row = cur.fetchone()
-    if not row: return {"error": f"No inventory record for ID {iid}"}
+    if not row:
+        return {"error": f"No inventory record for ID {iid}"}
     current_stock = float(row[0])
     min_stock = float(row[1] or 10)
 
+    # Calculate fulfilled quantity
     fulfilled_qty = min(quantity_purchased, current_stock)
     new_stock = max(0.0, current_stock - fulfilled_qty)
 
+    # Update inventory_master
     cur.execute("UPDATE inventory_master SET closing_stock=%s WHERE inventory_id=%s", (new_stock, iid))
     conn.commit()
 
-    stock_status = "In Stock" if new_stock > min_stock else ("Low Stock" if new_stock>0 else "Out of Stock")
+    # Log consumption
+    transaction_id = str(uuid.uuid4())
+    today = date.today()
+    department = "General"
+    staff_id = "SYSTEM"
+    shift = "Morning"
+    consumption_reason = "Customer Purchase"
+    batch_lot = None  # optional, keep null if unknown
+
+    cur.execute(
+        """
+        INSERT INTO consumption
+        (transaction_id, date, inventory_id, quantity_consumed, department, staff_id, shift, consumption_reason, remaining_stock, batch_lot)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """,
+        (transaction_id, today, iid, int(fulfilled_qty), department, staff_id, shift, consumption_reason, int(new_stock), batch_lot)
+    )
+    conn.commit()
+
+    # Determine stock status
+    stock_status = "In Stock" if new_stock > min_stock else ("Low Stock" if new_stock > 0 else "Out of Stock")
+
+    # Build result
     result = {
         "Inventory_ID": iid,
         "Item_Name": item_name,
@@ -263,7 +332,8 @@ def update_inventory_after_purchase(item_name: str, quantity_purchased: float):
         "Message": f"Purchase recorded. Updated stock: {new_stock}"
     }
 
-    if stock_status in ["Low Stock","Out of Stock"]:
+    # Recommend alternatives if stock is low or out
+    if stock_status in ["Low Stock", "Out of Stock"]:
         result["Alternatives"] = recommend_alternatives(item_name)
 
     return result
@@ -282,6 +352,13 @@ def reorder_item(item_name: str, reorder_quantity: int = 10):
     MCP wrapper: Calls reusable reorder function.
     """
     return process_reorder(item_name, reorder_quantity)
+
+@mcp.tool
+def recommend_alternative_product(item_name: str, top_k: int = 3):
+    """
+    MCP wrapper: Calls reusable recommend_alternative function.
+    """
+    return recommend_alternatives(item_name, top_k)
 
 def process_reorder(item_name: str, reorder_quantity: int = 10):
     """
@@ -389,6 +466,8 @@ def send_reorder_email(recipient: str, subject: str, body: str):
         return f"Email Failed: {str(e)}"
 
 @mcp.tool
+
+
 def process_receipts_folder():
     """
     Processes receipts in ~/Documents/receipts, updates inventory_master and consumption table,
@@ -420,7 +499,6 @@ def process_receipts_folder():
                         page_text = page.extract_text()
                         if page_text:
                             text += page_text + "\n"
-
             else:
                 all_results.append({"filename": filename, "error": "Unsupported file type"})
                 continue
@@ -429,28 +507,41 @@ def process_receipts_folder():
             all_results.append({"filename": filename, "error": str(e)})
             continue
 
-
         # -----------------------------
-        # PARSE ITEMS
+        # PARSE ITEMS (handle separate lines for Item & Quantity)
         # -----------------------------
         items = []
-        for line in text.splitlines():
-            line = line.strip()
+        lines = text.splitlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
             if not line:
+                i += 1
                 continue
 
-            match = re.match(r'(.+?)[\s:-]+(\d+)', line)
-            if match:
-                items.append({
-                    "name": match.group(1).strip(),
-                    "quantity": int(match.group(2))
-                })
+            # Match "Item: <name>"
+            if line.lower().startswith("item:"):
+                item_name = line.split(":", 1)[1].strip()
+                qty = 0
+
+                # Look ahead for "Quantity: <number>"
+                if i + 1 < len(lines) and lines[i + 1].lower().startswith("quantity:"):
+                    try:
+                        qty = float(lines[i + 1].split(":", 1)[1].strip())
+                    except:
+                        qty = 0
+                    i += 1  # skip quantity line
+
+                items.append({"name": item_name, "quantity": qty})
+            i += 1
 
         if not items:
             all_results.append({"filename": filename, "error": "No items found"})
             continue
 
-
+        # -----------------------------
+        # PROCESS ITEMS
+        # -----------------------------
         receipt_results = []
         for item in items:
             name = item["name"]
@@ -463,12 +554,9 @@ def process_receipts_folder():
 
             iid = resolved_list[0][0]
 
-            # -----------------------------
-            # CURRENT + MIN STOCK
-            # -----------------------------
+            # Current + Min stock
             cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
             row = cur.fetchone()
-
             current_stock = float(row[0]) if row and row[0] is not None else 0
             min_stock = float(row[1] or 10)
 
@@ -478,12 +566,8 @@ def process_receipts_folder():
             cur.execute("UPDATE inventory_master SET closing_stock=%s WHERE inventory_id=%s",
                         (new_stock, iid))
 
-
-            # -----------------------------
-            # INSERT INTO consumption
-            # -----------------------------
+            # Insert into consumption
             transaction_id = str(uuid.uuid4())
-
             department = "General"
             staff_id = "SYSTEM"
             shift = "Morning"
@@ -506,10 +590,7 @@ def process_receipts_folder():
             )
             conn.commit()
 
-
-            # -----------------------------
-            # STOCK STATUS + AUTO-REORDER
-            # -----------------------------
+            # Stock status + auto-reorder
             stock_status = (
                 "In Stock" if new_stock > min_stock
                 else "Low Stock" if new_stock > 0
@@ -517,10 +598,8 @@ def process_receipts_folder():
             )
 
             reorder_triggered = None
-
             if stock_status in ("Low Stock", "Out of Stock"):
                 reorder_triggered = process_reorder(name, reorder_quantity=10)
-
 
             receipt_results.append({
                 "item": name,
@@ -531,12 +610,10 @@ def process_receipts_folder():
                 "Reorder_Triggered": reorder_triggered
             })
 
-
         all_results.append({
             "filename": filename,
             "processed_items": receipt_results
         })
-
 
         # Delete processed file
         try:
@@ -544,8 +621,8 @@ def process_receipts_folder():
         except Exception as e:
             all_results.append({"filename": filename, "delete_error": str(e)})
 
-
     return {"success": True, "receipts_summary": all_results}
+
 
 # ----------------------------
 # Run MCP Server

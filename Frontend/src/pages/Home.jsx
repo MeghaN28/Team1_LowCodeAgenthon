@@ -19,11 +19,12 @@ function Home() {
     'out-of-stock': 'Out of Stock'
   }
 
-  const getStockStatus = (item) => {
-    if (item.quantity === 0) return 'out-of-stock'
-    if (item.quantity <= item.threshold) return 'low-stock'
-    return 'in-stock'
-  }
+const getStockStatus = (item) => {
+  if (item.quantity === 0) return 'out-of-stock';
+  if (item.quantity > 0 && item.quantity <= item.threshold) return 'low-stock';
+  return 'in-stock';
+}
+
 
   // Fetch inventory
   useEffect(() => {

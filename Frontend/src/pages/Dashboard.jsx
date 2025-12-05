@@ -38,7 +38,6 @@ function Dashboard() {
     "Authorization": "Bearer YOUR_IGENTIC_TOKEN"
   };
 
-  // Parse text-only MCP response
   const parseAgentResponse = (text, item) => {
     if (!text) return { currentStock: item.quantity, reorderLevel: item.threshold, lowStock: false, actions: [] };
 
@@ -67,6 +66,21 @@ function Dashboard() {
     return { currentStock, reorderLevel, lowStock, actions };
   };
 
+  // Convert value to number safely
+  const safeNumber = (val) => {
+    const n = Number(val);
+    return isNaN(n) ? 0 : n;
+  };
+
+  // Stock status
+  const getStockStatus = (item) => {
+    const qty = safeNumber(item.quantity);
+    const th = safeNumber(item.threshold);
+    if (qty === 0) return 'out-of-stock';
+    if (qty > 0 && qty <= th) return 'low-stock';
+    return 'in-stock';
+  };
+
   // Fetch inventory
   useEffect(() => {
     setLoading(true);
@@ -74,22 +88,14 @@ function Dashboard() {
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.items)) {
-          const seen = new Set();
-          const formatted = data.items
-            .filter(item => {
-              const normalized = item.item_name?.toLowerCase() ?? '';
-              if (seen.has(normalized)) return false;
-              seen.add(normalized);
-              return true;
-            })
-            .map(item => ({
-              id: item.inventory_id || `INV${Math.floor(Math.random()*100000)}`,
-              name: item.item_name || 'Unnamed Item',
-              category: item.item_type || item.category || 'Unknown',
-              quantity: item.current_stock ?? item.initial_stock ?? 0,
-              threshold: item.min_stock ?? item.minimum_required ?? 0,
-              raw: item
-            }));
+          const formatted = data.items.map(item => ({
+            id: item.inventory_id || `INV${Math.floor(Math.random()*100000)}`,
+            name: item.item_name || 'Unnamed Item',
+            category: item.item_type || item.category || 'Unknown',
+            quantity: safeNumber(item.current_stock ?? item.initial_stock ?? 0),
+            threshold: safeNumber(item.min_stock ?? item.minimum_required ?? 0),
+            raw: item
+          }));
           setInventory(formatted);
         } else {
           setInventory([]);
@@ -109,12 +115,6 @@ function Dashboard() {
   };
   const colors = chartColors[theme] || chartColors.light;
 
-  const getStockStatus = (item) => {
-    if (item.quantity === 0) return 'out-of-stock';
-    if (item.quantity <= item.threshold) return 'low-stock';
-    return 'in-stock';
-  };
-
   const handleEdit = (item) => {
     setEditingId(item.id);
     setEditForm({
@@ -128,7 +128,7 @@ function Dashboard() {
   const handleSaveEdit = () => {
     setInventory(inventory.map(item =>
       item.id === editingId
-        ? { ...item, name: editForm.name, category: editForm.category, quantity: parseInt(editForm.quantity) || 0, threshold: parseInt(editForm.threshold) || 0 }
+        ? { ...item, name: editForm.name, category: editForm.category, quantity: safeNumber(editForm.quantity), threshold: safeNumber(editForm.threshold) }
         : item
     ));
     setEditingId(null);
@@ -153,17 +153,18 @@ function Dashboard() {
   const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
   const paginatedInventory = filteredInventory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  // Stats: match Home page
   const stats = {
     totalItems: inventory.length,
-    inStock: inventory.filter(item => item.quantity > item.threshold).length,
-    lowStock: inventory.filter(item => item.quantity > 0 && item.quantity <= item.threshold).length,
-    outOfStock: inventory.filter(item => item.quantity === 0).length,
-    totalQuantity: inventory.reduce((sum, item) => sum + item.quantity, 0)
+    inStock: inventory.filter(item => getStockStatus(item) === 'in-stock').length,
+    lowStock: inventory.filter(item => getStockStatus(item) === 'low-stock').length,
+    outOfStock: inventory.filter(item => getStockStatus(item) === 'out-of-stock').length,
+    totalQuantity: inventory.reduce((sum, item) => sum + safeNumber(item.quantity), 0)
   };
 
   const categoryData = inventory.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = { name: item.category, quantity: 0, items: 0 };
-    acc[item.category].quantity += item.quantity;
+    acc[item.category].quantity += safeNumber(item.quantity);
     acc[item.category].items += 1;
     return acc;
   }, {});
@@ -180,9 +181,8 @@ function Dashboard() {
     { name: 'Out of Stock', value: stats.outOfStock, color: '#ef4444' }
   ];
 
-  const lowStockAlerts = inventory.filter(item => item.quantity <= item.threshold);
+  const lowStockAlerts = inventory.filter(item => getStockStatus(item) === 'low-stock');
 
-  // Send to iGentic Agent
   async function sendToAgent(item) {
     if (!item) return;
     setCurrentItem(item);
@@ -193,8 +193,6 @@ function Dashboard() {
     setParsedData(null);
 
     try {
-      console.log("Sending item to agent:", item);
-
       const payload = {
         UserInput: JSON.stringify({
           item_id: item.id,
@@ -233,15 +231,12 @@ function Dashboard() {
       }
 
       const data = await res.json();
-      console.log("Agent response:", data);
 
       if (data.session_id) localStorage.setItem("igentic_session", data.session_id);
 
       setAgentResponse(data);
 
-      // Always parse data.result
       const parsed = parseAgentResponse(data.result || "", item);
-      console.log("Parsed data:", parsed);
 
       setParsedData(parsed);
       setShowModal(true);
@@ -311,8 +306,8 @@ function Dashboard() {
                 id: nextId,
                 name: newItem.name || 'New Item',
                 category: newItem.category || 'Unknown',
-                quantity: parseInt(newItem.quantity) || 0,
-                threshold: parseInt(newItem.threshold) || 0
+                quantity: safeNumber(newItem.quantity),
+                threshold: safeNumber(newItem.threshold)
               };
               setInventory([created, ...inventory]);
               setShowAddForm(false);
