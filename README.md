@@ -96,6 +96,7 @@ Recommended Python versions: 3.9–3.11
 Install torch before sentence-transformers for compatibility.
 
 Add cache folders (e.g., __pycache__/) to .gitignore.
+
 --------------------------------------------------------------------------------------------
 Team Task Split & Contributions
 🧠 Multi-Agent System & Backend
@@ -139,6 +140,7 @@ POC on iGentIC — Megha N
 GitHub Repository Setup — Megha N
 
 Input Files (CSV, Sample Data) — Poorrnima Vetrivelan
+
 --------------------------------------------------------------------------------------------
 💬 Feedback on the iGentIC Platform
 
@@ -171,6 +173,7 @@ Provide detailed demo videos covering full platform functionality
 Add rename/edit options in more UI sections
 
 Overall, the platform provided a strong foundation for building our multi-agent inventory management system. With a few enhancements, it can become even more powerful for future teams.
+
 ------------------------------------------------------------------------------------------
 
 Frontend
