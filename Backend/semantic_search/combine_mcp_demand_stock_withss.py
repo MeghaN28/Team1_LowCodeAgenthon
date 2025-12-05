@@ -1,29 +1,38 @@
-# combined_inventory_demand_mcp_semantic.py
+# combined_mcp_demand_stock_clean.py
 # ---------------------------------------
-# MCP Agent for Inventory Data + Demand Forecast + Dashboard Report
-# Added semantic search (128-dim embeddings) for inventory name resolution
-# Existing fuzzy & exact matching logic preserved
+# MCP Agent: Inventory & Demand
+# Features:
+# - Multi-item inventory tracking
+# - Stock check with real-time status
+# - Forecasting 7-day consumption
+# - Automatic alternative recommendations via embeddings
+# - Update inventory after purchase
+# - Reorder & email notifications
 # ---------------------------------------
 
+import os
+import re
+import pickle
+import base64
 import psycopg2
 import pandas as pd
-from fastmcp import FastMCP
-from xgboost import XGBRegressor
-from thefuzz import fuzz, process
-import re
-import uuid
 import numpy as np
+from fastmcp import FastMCP
+from thefuzz import fuzz, process
 from sentence_transformers import SentenceTransformer
-from email.message import EmailMessage
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-import os
-import pickle
-import base64
-
+import io
+import pdfplumber
+from PIL import Image
+import pytesseract
+from datetime import datetime
+import uuid
+from datetime import date
+from datetime import datetime, timedelta
 
 # ----------------------------
 # Initialize MCP
@@ -34,671 +43,680 @@ mcp = FastMCP("Inventory & Demand MCP 📦🧠")
 # PostgreSQL setup
 # ----------------------------
 conn = psycopg2.connect(
- 
+
 )
 cur = conn.cursor()
 
 # ----------------------------
-# Load historical dataset for demand forecasting
-# ----------------------------
-historical_df = pd.read_csv("models/demand_forecast_base.csv", parse_dates=['Date'])
-historical_df['Inventory_ID'] = historical_df['Inventory_ID'].astype(str)
-
-# ----------------------------
-# Load inventory_master names from DB
-# ----------------------------
-def load_inventory_master_names():
-    cur.execute("SELECT inventory_id, item_name FROM inventory_master")
-    rows = cur.fetchall()
-    master_map = {}
-    for r in rows:
-        inv_id = str(r[0]).strip()
-        name = r[1] or ""
-        master_map[name] = inv_id
-    return master_map
-
-inventory_master_map = load_inventory_master_names()
-
-# ----------------------------
-# Normalization utilities and precompute cleaned name maps
+# Utilities
 # ----------------------------
 def normalize_text(s: str):
-    if not s:
-        return ""
-    s = str(s)
-    s = s.replace('\xa0', ' ')
-    s = s.lower()
-    s = re.sub(r'\s+', ' ', s)
+    if not s: return ""
+    s = str(s).replace('\xa0', ' ').lower()
     s = re.sub(r'[^\w\s]', ' ', s)
     s = re.sub(r'\s+', ' ', s)
     return s.strip()
 
-historical_names_clean = [normalize_text(n) for n in historical_df['Item_Name'].fillna("").astype(str)]
-historical_name_to_id = dict(zip(historical_names_clean, historical_df['Inventory_ID'].astype(str)))
+# ----------------------------
+# Load inventory master
+# ----------------------------
+def load_inventory_master():
+    cur.execute("SELECT inventory_id, item_name FROM inventory_master")
+    rows = cur.fetchall()
+    master_map = {}
+    for iid, name in rows:
+        if name:
+            master_map.setdefault(normalize_text(name), []).append(str(iid))
+    return master_map
 
-master_names_clean = [normalize_text(n) for n in inventory_master_map.keys()]
-master_name_to_id = {normalize_text(k): v for k, v in inventory_master_map.items()}
-
-combined_names_clean = []
-combined_name_to_id = {}
-for name in master_name_to_id:
-    combined_names_clean.append(name)
-    combined_name_to_id[name] = master_name_to_id[name]
-for name, inv_id in historical_name_to_id.items():
-    if name not in combined_name_to_id:
-        combined_names_clean.append(name)
-        combined_name_to_id[name] = str(inv_id)
-
-inventory_ids_set = set(historical_df['Inventory_ID'].astype(str))
-inventory_ids_set.update({str(v) for v in inventory_master_map.values()})
+master_name_to_ids = load_inventory_master()
+inventory_ids_set = set(iid for ids in master_name_to_ids.values() for iid in ids)
 
 # ----------------------------
-# Load trained XGBoost model
+# Semantic embeddings
 # ----------------------------
-model_path = "models/demand_agent_xgb.json"
-xgb_model = XGBRegressor()
-xgb_model.load_model(model_path)
-
-# ----------------------------
-# Semantic search setup
-# ----------------------------
-sem_model = SentenceTransformer('paraphrase-MiniLM-L3-v2')  # 128-dim
+sem_model = SentenceTransformer('paraphrase-MiniLM-L3-v2')  # 384-dim
 
 def load_inventory_embeddings():
     cur.execute("SELECT inventory_id, embedding FROM inventory_master WHERE embedding IS NOT NULL")
     rows = cur.fetchall()
     emb_map = {}
-    for inv_id, emb in rows:
+    for iid, emb in rows:
         if emb:
-            emb_map[str(inv_id)] = np.array(emb, dtype=np.float32)
+            if isinstance(emb, str):
+                emb = np.fromstring(emb.strip('[]'), sep=',', dtype=np.float32)
+            emb_map[str(iid)] = np.array(emb, dtype=np.float32)
     return emb_map
 
 inventory_embeddings = load_inventory_embeddings()
 inventory_ids = list(inventory_embeddings.keys())
-emb_matrix = np.stack(list(inventory_embeddings.values())) if inventory_embeddings else np.zeros((0,128))
+emb_matrix = np.stack(list(inventory_embeddings.values())) if inventory_embeddings else np.zeros((0,384), dtype=np.float32)
 
-def semantic_search(query: str, top_k: int = 1, threshold: float = 0.7):
-    if len(inventory_embeddings) == 0:
-        return None, 0.0
-    query_emb = sem_model.encode(query)
-    emb_norms = np.linalg.norm(emb_matrix, axis=1) * np.linalg.norm(query_emb)
-    sims = np.dot(emb_matrix, query_emb) / (emb_norms + 1e-10)
-    best_idx = np.argmax(sims)
-    best_score = sims[best_idx]
-    if best_score >= threshold:
-        return inventory_ids[best_idx], best_score
-    return None, 0.0
+def semantic_search(query: str, top_k: int = 3, threshold: float = 0.6):
+    if len(inventory_embeddings) == 0: return []
+    query_emb = np.array(sem_model.encode(query), dtype=np.float32)
+    sims = np.dot(emb_matrix, query_emb) / (np.linalg.norm(emb_matrix, axis=1) * np.linalg.norm(query_emb) + 1e-10)
+    top_indices = np.argsort(sims)[-top_k:][::-1]
+    return [(inventory_ids[i], sims[i]) for i in top_indices if sims[i] >= threshold]
 
 # ----------------------------
-# Utility functions
+# Resolve inventory IDs
 # ----------------------------
-def clean_text(s):
-    if not s:
-        return ""
-    return s.replace('\xa0', ' ').strip()
-
-def extract_periods_from_query(query: str, default: int = 7) -> int:
-    match = re.search(r'(\d+)\s*(day|days|week|weeks)', query.lower())
-    if match:
-        num = int(match.group(1))
-        if "week" in match.group(2):
-            num *= 7
-        return num
-    return default
-
 def resolve_inventory_ids(input_str: str):
-    if not input_str:
-        return []
-
-    raw = str(input_str).strip()
-    input_upper = raw.upper()
-    input_clean = normalize_text(raw)
-
-    # 1️⃣ Exact Inventory ID
-    if input_upper in inventory_ids_set:
-        return [(input_upper, "Exact Inventory_ID")]
-
-    # 2️⃣ Exact Name
-    if input_clean in historical_name_to_id:
-        return [(str(historical_name_to_id[input_clean]), "Exact Name (historical)")]
-    if input_clean in master_name_to_id:
-        return [(str(master_name_to_id[input_clean]), "Exact Name (master)")]
-
-    # 3️⃣ Semantic search
-    sem_id, sem_score = semantic_search(raw, top_k=1, threshold=0.7)
-    if sem_id:
-        return [(sem_id, f"Semantic Search (score={sem_score:.2f})")]
-
-    # 4️⃣ Fuzzy fallback
-    if input_clean:
-        match = process.extractOne(input_clean, combined_names_clean, scorer=fuzz.token_sort_ratio)
-        if match:
-            match_name, score = match
-            if score >= 55:
-                inv_id = combined_name_to_id.get(match_name)
-                source = "Fuzzy Name (master)" if match_name in master_name_to_id else "Fuzzy Name (historical)"
-                return [(str(inv_id), f"{source} (score={score})")]
-
-    return []
+    resolved = []
+    input_clean = normalize_text(input_str)
+    if input_clean in master_name_to_ids:
+        for iid in master_name_to_ids[input_clean]:
+            resolved.append((iid, "Exact Name (master)"))
+    if not resolved:
+        sem_results = semantic_search(input_str)
+        for iid, score in sem_results:
+            resolved.append((iid, f"Semantic Search (score={score:.2f})"))
+    if not resolved:
+        match, score = process.extractOne(input_clean, master_name_to_ids.keys(), scorer=fuzz.token_sort_ratio)
+        if score >= 55:
+            for iid in master_name_to_ids[match]:
+                resolved.append((iid, f"Fuzzy Name (master) (score={score})"))
+    return resolved
 
 # ----------------------------
-# Forecasting functions
+# Fetch inventory data
 # ----------------------------
-def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
-    df_item = historical_df[historical_df['Inventory_ID'] == str(item_id)].sort_values('Date').copy()
-    if df_item.empty:
-        return [{"Date": None, "Inventory_ID": item_id, "Predicted_Consumption": 0,
-                 "Available_Stock": 0, "Stock_Warning": True, "Search_Method": method,
-                 "error": f"No historical data found for Inventory_ID '{item_id}'"}]
+def fetch_inventory_data(item_ids):
+    results = []
+    for iid in item_ids:
+        cur.execute("SELECT * FROM inventory_master WHERE inventory_id=%s", (iid,))
+        row = cur.fetchone()
+        if not row: continue
+        cols = [desc[0] for desc in cur.description]
+        master_data = dict(zip(cols, row))
 
-    last_row = df_item.iloc[-1].copy()
-    defaults = {'Closing_Stock': 100, 'Lead_Time_Days': 3, 'lead_time_days': 3,
-                'min_stock_limit': 10, 'max_capacity': 500, 'Quantity_Consumed': 0}
-    for col, val in defaults.items():
-        if col not in last_row or pd.isna(last_row[col]):
-            last_row[col] = val
+        cur.execute(
+            "SELECT date, quantity_consumed FROM consumption WHERE inventory_id=%s ORDER BY date DESC LIMIT 7",
+            (iid,)
+        )
+        last_consumption = [{"date": r[0], "quantity_consumed": float(r[1])} for r in cur.fetchall()]
 
-    preds = []
-    available_stock = last_row['Closing_Stock']
-    min_stock_limit = float(last_row.get('min_stock_limit', 10))
+        results.append({"Inventory_Master": master_data, "Consumption": last_consumption})
+    return results
 
-    for lag in range(1, 8):
-        last_row[f'lag_{lag}'] = last_row.get(f'lag_{lag}', 0.0)
+# ----------------------------
+# Forecast consumption
+# ----------------------------
+import pandas as pd
+import numpy as np
 
-    for day in range(periods):
-        feat = {
-            'Opening_Stock': float(available_stock),
-            'Closing_Stock': float(available_stock),
-            'Quantity_Restocked': float(last_row.get('Quantity_Restocked', 0.0)),
-            'Lead_Time_Days': float(last_row.get('Lead_Time_Days', last_row.get('lead_time_days', 3))),
-            'lead_time_days': float(last_row.get('lead_time_days', last_row.get('Lead_Time_Days', 3))),
-            'min_stock_limit': float(last_row.get('min_stock_limit', min_stock_limit)),
-            'max_capacity': float(last_row.get('max_capacity', 500)),
-            'day_of_week': int((last_row['Date'].dayofweek + day + 1) % 7) if 'Date' in last_row and pd.notna(last_row['Date']) else 0,
-            'month': int((last_row['Date'] + pd.Timedelta(days=day + 1)).month) if 'Date' in last_row and pd.notna(last_row['Date']) else 1
+def forecast_item(item_ids, start_date=None, end_date=None, periods=7):
+    """
+    Forecast or show historical consumption for item_ids.
+    
+    Parameters:
+    - item_ids: list of inventory IDs
+    - start_date: datetime.date or string (optional)
+    - end_date: datetime.date or string (optional)
+    - periods: number of days to forecast (used if no start_date)
+    """
+    forecasts = []
+    today = pd.Timestamp.today().normalize()
+    
+    # Determine range
+    if start_date:
+        start_date = pd.to_datetime(start_date).normalize()
+    else:
+        start_date = today
+    
+    if end_date:
+        end_date = pd.to_datetime(end_date).normalize()
+    else:
+        end_date = start_date + pd.Timedelta(days=periods-1)
+    
+    for iid in item_ids:
+        # Fetch historical consumption
+        cur.execute("""
+            SELECT date, quantity_consumed 
+            FROM consumption 
+            WHERE inventory_id=%s AND date BETWEEN %s AND %s
+            ORDER BY date ASC
+        """, (iid, start_date, end_date))
+        rows = cur.fetchall()
+
+        daily_consumption = {r[0].date() if isinstance(r[0], pd.Timestamp) else r[0]: float(r[1] or 0) for r in rows}
+        avg_consumption = np.mean(list(daily_consumption.values())) if daily_consumption else 2.0
+
+        # Get stock info
+        cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+        row = cur.fetchone()
+        available_stock = float(row[0]) if row and row[0] is not None else 100.0
+        min_stock_limit = float(row[1]) if row and row[1] is not None else 10.0
+
+        # Generate forecast/historical data for the range
+        num_days = (end_date - start_date).days + 1
+        for day in range(num_days):
+            date = (start_date + pd.Timedelta(days=day)).date()
+            
+            # Use historical if available, else predict
+            consumed_today = daily_consumption.get(date, avg_consumption * (1 + 0.05*np.sin(day)))
+            
+            # Check stock limit
+            stock_warning = (available_stock - consumed_today) < min_stock_limit
+            consumed_today = min(consumed_today, available_stock)  # cannot consume more than available
+            
+            forecasts.append({
+                "Date": date.strftime("%Y-%m-%d"),
+                "Inventory_ID": iid,
+                "Predicted_Consumption": round(consumed_today, 2),
+                "Available_Stock": round(available_stock, 2),
+                "Stock_Warning": stock_warning
+            })
+            
+            available_stock = max(0.0, available_stock - consumed_today)
+    
+    return forecasts
+
+# ----------------------------
+# Recommend alternatives
+# ----------------------------
+def recommend_alternatives(item_name: str, top_k: int = 3):
+    seen = set()
+    alternatives = []
+
+    # 1️⃣ Exact match
+    cur.execute(
+        "SELECT item_name, closing_stock FROM inventory_master WHERE LOWER(item_name)=LOWER(%s)",
+        (item_name,)
+    )
+    row = cur.fetchone()
+    if row and row[1] > 0:
+        return [row[0]]
+
+    # 2️⃣ Form + Use + Type check for general queries
+    cur.execute(
+        """
+        SELECT item_name, closing_stock 
+        FROM inventory_master 
+        WHERE LOWER(form)='tablet' AND LOWER(use) LIKE %s AND closing_stock > 0
+        """,
+        (f"%{item_name.lower()}%",)
+    )
+    rows = cur.fetchall()
+    for row in rows:
+        if row[0] not in seen:
+            alternatives.append(row[0])
+            seen.add(row[0])
+
+    # 3️⃣ Semantic search fallback
+    for iid, score in semantic_search(item_name, top_k=top_k, threshold=0.5):
+        cur.execute(
+            "SELECT item_name, closing_stock FROM inventory_master WHERE inventory_id=%s", 
+            (iid,)
+        )
+        row = cur.fetchone()
+        if row:
+            name, stock = row
+            if stock > 0 and name not in seen:
+                alternatives.append(name)
+                seen.add(name)
+
+    if not alternatives:
+        return f"No alternatives available for '{item_name}' in stock."
+
+    return alternatives
+
+# ----------------------------
+# MCP Tools
+# ----------------------------
+
+@mcp.tool
+def check_stock(item_name: str):
+    resolved_list = resolve_inventory_ids(item_name)
+    if not resolved_list: return {"error": f"Inventory '{item_name}' not found"}
+    item_ids = [iid for iid, _ in resolved_list]
+    data_list = fetch_inventory_data(item_ids)
+
+    results = []
+    for data in data_list:
+        master = data["Inventory_Master"]
+        closing_stock = float(master.get("closing_stock",0))
+        min_stock = float(master.get("min_stock",10))
+        stock_status = "Out of Stock" if closing_stock==0 else ("Low Stock" if closing_stock < min_stock else "In Stock")
+
+        entry = {
+            "Inventory_ID": master.get("inventory_id"),
+            "Item_Name": master.get("item_name"),
+            "Closing_Stock": closing_stock,
+            "Min_Stock_Limit": min_stock,
+            "Stock_Status": stock_status,
+            "Last_Consumption_7_Days": data.get("Consumption", []),
+            "Predicted_Consumption_7_Days": forecast_item([master.get("inventory_id")])
         }
 
-        for lag in range(1, 8):
-            feat[f'lag_{lag}'] = float(last_row.get(f'lag_{lag}', 0.0))
+        if stock_status in ["Out of Stock", "Low Stock"]:
+            entry["Alternatives"] = recommend_alternatives(master.get("item_name"))
 
-        X_pred = pd.DataFrame([feat])
-        try:
-            y_pred_raw = xgb_model.predict(X_pred)[0]
-            y_pred = float(max(0.0, y_pred_raw))
-        except Exception:
-            y_pred = 0.0
+        results.append(entry)
 
-        stock_warning = (available_stock - y_pred) < min_stock_limit
-
-        preds.append({'Date': (last_row['Date'] + pd.Timedelta(days=day + 1)).strftime("%Y-%m-%d") if 'Date' in last_row and pd.notna(last_row['Date']) else None,
-                      'Inventory_ID': str(item_id),
-                      'Predicted_Consumption': round(y_pred, 2),
-                      'Available_Stock': round(float(available_stock), 2),
-                      'Stock_Warning': stock_warning,
-                      'Search_Method': method})
-
-        for lag in range(7, 1, -1):
-            last_row[f'lag_{lag}'] = last_row.get(f'lag_{lag-1}', 0.0)
-        last_row['lag_1'] = y_pred
-        available_stock = max(0.0, available_stock - y_pred)
-        last_row['Closing_Stock'] = available_stock
-
-    return preds
-
-# ----------------------------
-# Fetch inventory related data
-# ----------------------------
-def fetch_inventory_data(inventory_id: str):
-    inventory_id_clean = str(inventory_id).strip().upper()
-    data = {}
-
-    def execute_and_format(query, params, limit=None):
-        cur.execute(query + (f" LIMIT {limit}" if limit else ""), params)
-        rows = cur.fetchall()
-        if not rows:
-            return None if limit == 1 else []
-        column_names = [desc[0] for desc in cur.description]
-        return dict(zip(column_names, rows[0])) if limit == 1 else [dict(zip(column_names, r)) for r in rows]
-
-    master_data = execute_and_format("""SELECT * FROM inventory_master WHERE inventory_id=%s""", (inventory_id_clean,), limit=1)
-    if not master_data:
-        return {"error": f"No master data found for inventory ID {inventory_id_clean}"}
-    data["Inventory_Master"] = master_data
-
-    data["Inventory_Daily"] = execute_and_format("""SELECT * FROM inventory_daily WHERE inventory_id=%s ORDER BY date DESC""", (inventory_id_clean,), limit=7)
-    data["Consumption"] = execute_and_format("""SELECT * FROM consumption WHERE inventory_id=%s ORDER BY date DESC""", (inventory_id_clean,), limit=7)
-    data["Finance"] = execute_and_format("""SELECT * FROM finance WHERE inventory_id=%s ORDER BY purchase_date DESC""", (inventory_id_clean,), limit=5)
-    data["Department_Mapping"] = execute_and_format("""SELECT * FROM inventory_department_mapping WHERE inventory_id=%s""", (inventory_id_clean,))
-
-    vendor_id = master_data.get("vendor_id")
-    if vendor_id:
-        data["Vendor"] = execute_and_format("""SELECT * FROM vendor_master WHERE vendor_id=%s""", (vendor_id,), limit=1)
-    else:
-        data["Vendor"] = None
-
-    return data
-
-# ----------------------------
-# User-facing MCP tools
-# ----------------------------
+    results.sort(key=lambda x: (0 if x["Stock_Status"]=="Out of Stock" else (1 if x["Stock_Status"]=="Low Stock" else 2)))
+    return results
 
 @mcp.tool
-def predict_demand(inventory_id_or_name: str):
-    """
-    Predicts future demand and stock consumption for a specified inventory item.
-    
-    This tool performs intelligent inventory resolution using multiple matching strategies:
-    1. Exact Inventory ID match
-    2. Exact item name match (historical or master data)
-    3. Semantic search using embeddings
-    4. Fuzzy name matching with token-sort ratio
-    
-    Args:
-        inventory_id_or_name (str): Inventory ID or item name to predict demand for.
-                                   Can include time period specification (e.g., "Item 5 days")
-    
-    Returns:
-        list: List of forecast dictionaries containing:
-            - Date (str): Predicted date in YYYY-MM-DD format
-            - Inventory_ID (str): The resolved inventory ID
-            - Predicted_Consumption (float): Forecasted consumption amount
-            - Available_Stock (float): Projected available stock after consumption
-            - Stock_Warning (bool): Whether stock will fall below minimum threshold
-            - Search_Method (str): Method used to resolve the inventory item
-            - error (str, optional): Error message if inventory not found
-    
-    Example:
-        >>> predict_demand("Syringes 10 days")
-        >>> predict_demand("INV-001")
-    """
-    periods = extract_periods_from_query(inventory_id_or_name, default=7)
 
-    # -----------------------------
-    # 1️⃣ Check if input is exact Inventory ID first
-    # -----------------------------
-    inv_id_candidate = str(inventory_id_or_name).strip().upper()
-    if inv_id_candidate in inventory_ids_set:
-        inv_id = inv_id_candidate
-        method = "Exact Inventory_ID"
-        resolved_list = [(inv_id, method)]
-    else:
-        # -----------------------------
-        # 2️⃣ Fallback: resolve via names / fuzzy / semantic
-        # -----------------------------
-        resolved_list = resolve_inventory_ids(inventory_id_or_name)
+def update_inventory_after_purchase(item_name: str, quantity_purchased: float):
+    if quantity_purchased <= 0:
+        return {"error": "Invalid quantity"}
 
-    # -----------------------------
-    # 3️⃣ If still nothing found, return error
-    # -----------------------------
+    # Resolve inventory ID from name
+    resolved_list = resolve_inventory_ids(item_name)
     if not resolved_list:
-        return [{
-            "Inventory_ID": inventory_id_or_name,
-            "Date": None,
-            "Predicted_Consumption": 0,
-            "Available_Stock": 0,
-            "Stock_Warning": True,
-            "Search_Method": "Not Found",
-            "error": f"Inventory '{inventory_id_or_name}' not found"
-        }]
+        return {"error": f"Inventory '{item_name}' not found"}
 
-    # -----------------------------
-    # 4️⃣ Generate forecasts
-    # -----------------------------
-    all_forecasts = []
-    for inv_id, method in resolved_list:
-        forecasts = forecast_item(inv_id, periods, method)
-        for f in forecasts:
-            f.setdefault("Date", None)
-            f.setdefault("Inventory_ID", inv_id)
-            f.setdefault("Predicted_Consumption", 0.0)
-            f.setdefault("Available_Stock", 0.0)
-            f.setdefault("Stock_Warning", False)
-            f.setdefault("Search_Method", method)
-            f.setdefault("error", None)
-        all_forecasts.extend(forecasts)
+    iid = resolved_list[0][0]
 
-    return all_forecasts
+    # Get current stock and minimum stock
+    cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+    row = cur.fetchone()
+    if not row:
+        return {"error": f"No inventory record for ID {iid}"}
+    current_stock = float(row[0])
+    min_stock = float(row[1] or 10)
+
+    # Calculate fulfilled quantity
+    fulfilled_qty = min(quantity_purchased, current_stock)
+    new_stock = max(0.0, current_stock - fulfilled_qty)
+
+    # Update inventory_master
+    cur.execute("UPDATE inventory_master SET closing_stock=%s WHERE inventory_id=%s", (new_stock, iid))
+    conn.commit()
+
+    # Log consumption
+    transaction_id = str(uuid.uuid4())
+    today = date.today()
+    department = "General"
+    staff_id = "SYSTEM"
+    shift = "Morning"
+    consumption_reason = "Customer Purchase"
+    batch_lot = None  # optional, keep null if unknown
+
+    cur.execute(
+        """
+        INSERT INTO consumption
+        (transaction_id, date, inventory_id, quantity_consumed, department, staff_id, shift, consumption_reason, remaining_stock, batch_lot)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """,
+        (transaction_id, today, iid, int(fulfilled_qty), department, staff_id, shift, consumption_reason, int(new_stock), batch_lot)
+    )
+    conn.commit()
+
+    # Determine stock status
+    stock_status = "In Stock" if new_stock > min_stock else ("Low Stock" if new_stock > 0 else "Out of Stock")
+
+    # Build result
+    result = {
+        "Inventory_ID": iid,
+        "Item_Name": item_name,
+        "Previous_Stock": current_stock,
+        "Quantity_Purchased": fulfilled_qty,
+        "Updated_Stock": new_stock,
+        "Stock_Status": stock_status,
+        "Message": f"Purchase recorded. Updated stock: {new_stock}"
+    }
+
+    # Recommend alternatives if stock is low or out
+    if stock_status in ["Low Stock", "Out of Stock"]:
+        result["Alternatives"] = recommend_alternatives(item_name)
+
+    return result
+
+import calendar
 
 @mcp.tool
-def check_stock(inventory_id_or_name: str):
+def predict_demand(item_name: str, period: str = None):
     """
-    Retrieves comprehensive stock status and consumption forecast for an inventory item.
-    
-    This tool provides a complete snapshot of an inventory item including:
-    - Current stock levels and minimum thresholds
-    - Historical consumption patterns (past 7 days)
-    - Predicted consumption for the next 7 days
-    - Stock warning indicators
-    - Vendor and department mapping information
-    
-    Args:
-        inventory_id_or_name (str): Inventory ID or item name to check stock for.
-    
-    Returns:
-        dict: Stock status dictionary containing:
-            - Inventory_ID (str): The resolved inventory ID
-            - Item_Name (str): Name of the inventory item
-            - Closing_Stock (float): Current available stock quantity
-            - Min_Stock_Limit (float): Minimum threshold for stock replenishment
-            - Stock_Warning (bool): Warning flag if current stock < minimum limit
-            - Search_Method (str): Method used to resolve the inventory item
-            - Last_Consumption_7_Days (list): Historical consumption records
-            - Predicted_Consumption_7_Days (list): 7-day demand forecast
-            - error (str, optional): Error message if inventory not found
-    
-    Example:
-        >>> check_stock("Bandages")
-        >>> check_stock("INV-042")
-    """
-    if not inventory_id_or_name:
-        return {"Inventory_ID": None,
-                "Item_Name": None,
-                "Closing_Stock": 0.0,
-                "Min_Stock_Limit": 0.0,
-                "Stock_Warning": True,
-                "Search_Method": "Not Provided",
-                "Last_Consumption_7_Days": [],
-                "Predicted_Consumption_7_Days": []}
+    Predict or show historical consumption for an item based on period.
 
-    inv_id_candidate = str(inventory_id_or_name).strip().upper()
-    if inv_id_candidate in inventory_ids_set:
-        inv_id = inv_id_candidate
-        method = "Exact Inventory_ID"
-    else:
-        input_clean = normalize_text(inventory_id_or_name.strip())
-        if input_clean in historical_name_to_id:
-            inv_id = str(historical_name_to_id[input_clean])
-            method = "Exact Name (historical)"
-        elif input_clean in master_name_to_id:
-            inv_id = str(master_name_to_id[input_clean])
-            method = "Exact Name (master)"
+    period options:
+    - "last_week": last 7 days from today
+    - "this_week": current week
+    - "last_month": previous month
+    - "month_name": e.g., "august", "september"
+    - None: defaults to next 7 days forecast
+    """
+    resolved_list = resolve_inventory_ids(item_name)
+    if not resolved_list:
+        return {"error": f"Inventory '{item_name}' not found"}
+    
+    item_ids = [iid for iid, _ in resolved_list]
+
+    # Determine date range
+    today = pd.Timestamp.today().normalize()
+    start_date = None
+    end_date = None
+
+    if period:
+        period = period.lower()
+        if period == "last_week":
+            start_date = today - pd.Timedelta(days=7)
+            end_date = today - pd.Timedelta(days=1)
+        elif period == "this_week":
+            start_date = today - pd.Timedelta(days=today.weekday())  # Monday
+            end_date = today
+        elif period == "last_month":
+            first_day_last_month = (today.replace(day=1) - pd.Timedelta(days=1)).replace(day=1)
+            last_day_last_month = today.replace(day=1) - pd.Timedelta(days=1)
+            start_date = first_day_last_month
+            end_date = last_day_last_month
         else:
-            resolved = resolve_inventory_ids(inventory_id_or_name)
-            if resolved:
-                inv_id, method = resolved[0]
-            else:
-                return {"Inventory_ID": inventory_id_or_name,
-                        "Item_Name": None,
-                        "Closing_Stock": 0.0,
-                        "Min_Stock_Limit": 0.0,
-                        "Stock_Warning": True,
-                        "Search_Method": "Not Found",
-                        "Last_Consumption_7_Days": [],
-                        "Predicted_Consumption_7_Days": [],
-                        "error": f"Inventory '{inventory_id_or_name}' not found"}
+            # Try parsing as month name
+            try:
+                month_num = list(calendar.month_name).index(period.capitalize())
+                start_date = pd.Timestamp(year=today.year, month=month_num, day=1)
+                last_day = calendar.monthrange(today.year, month_num)[1]
+                end_date = pd.Timestamp(year=today.year, month=month_num, day=last_day)
+            except ValueError:
+                return {"error": f"Cannot parse period '{period}'."}
+    
+    # If no period given, forecast next 7 days
+    return forecast_item(item_ids, start_date=start_date, end_date=end_date)
 
-    data = fetch_inventory_data(inv_id)
-    if "error" in data:
-        return {"Inventory_ID": inv_id,
-                "Item_Name": None,
-                "Closing_Stock": 0.0,
-                "Min_Stock_Limit": 0.0,
-                "Stock_Warning": True,
-                "Search_Method": method,
-                "Last_Consumption_7_Days": [],
-                "Predicted_Consumption_7_Days": [],
-                "error": data["error"]}
 
-    master = data["Inventory_Master"]
-    closing_stock = float(master.get("closing_stock", master.get("Closing_Stock", 0) or 0))
-    min_stock_limit = float(master.get("min_stock_limit", master.get("Min_Stock", 10) or 10))
-    stock_warning = closing_stock < min_stock_limit
-    last_consumption = data.get("Consumption", [])
 
-    forecast = forecast_item(inv_id, periods=7, method=method)
-    predicted_7_days = [{"Date": f["Date"], "Predicted_Consumption": f["Predicted_Consumption"]} for f in forecast]
+@mcp.tool
+def reorder_item(item_name: str, reorder_quantity: int = 10):
+    """
+    MCP wrapper: Calls reusable reorder function.
+    """
+    return process_reorder(item_name, reorder_quantity)
+
+@mcp.tool
+def recommend_alternative_product(item_name: str, top_k: int = 3):
+    """
+    MCP wrapper: Calls reusable recommend_alternative function.
+    """
+    return recommend_alternatives(item_name, top_k)
+
+def process_reorder(item_name: str, reorder_quantity: int = 10):
+    resolved_list = resolve_inventory_ids(item_name)
+    if not resolved_list:
+        return {"error": f"Inventory '{item_name}' not found"}
+
+    iid = resolved_list[0][0]
+
+    # Fetch current stock
+    cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+    row = cur.fetchone()
+    current_stock = int(row[0]) if row and row[0] is not None else 0
+    min_stock = int(row[1] or 10)
+
+    # Check for previous reorder
+    cur.execute("""
+        SELECT created_at 
+        FROM reorder_log
+        WHERE inventory_id=%s
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (iid,))
+    last_log = cur.fetchone()
+
+    send_follow_up = False
+    if last_log:
+        last_sent = last_log[0]
+        # convert date to datetime if needed
+        if isinstance(last_sent, date) and not isinstance(last_sent, datetime):
+            last_sent = datetime.combine(last_sent, datetime.min.time())
+        if datetime.now() - last_sent >= timedelta(days=2) and current_stock < min_stock:
+            send_follow_up = True
+
+    recipient = "n.megha82@gmail.com"
+    subject = f"Reorder Alert: {item_name}" + (" (Follow-up)" if send_follow_up else "")
+    body = f"""
+    Dear Inventory Manager,
+
+    Please reorder the item: {item_name} (Inventory ID: {iid})
+    Current Stock: {current_stock}
+    Reorder Quantity: {reorder_quantity}
+
+    {'This is a follow-up reminder.' if send_follow_up else 'This is an automated notification from the Inventory MCP system.'}
+    """
+
+    email_status = send_reorder_email(recipient, subject, body)
+
+    # Update status if follow-up
+    status_to_save = "Follow-up Email Sent" if send_follow_up else email_status
+
+    # Insert new log
+    cur.execute("""
+        INSERT INTO reorder_log 
+        (inventory_id, item_name, reorder_quantity, current_stock, status, email_recipient, email_subject, email_body)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (iid, item_name, reorder_quantity, current_stock, status_to_save, recipient, subject, body))
+    
+    conn.commit()
 
     return {
-        "Inventory_ID": inv_id,
-        "Item_Name": master.get("item_name"),
-        "Closing_Stock": closing_stock,
-        "Min_Stock_Limit": min_stock_limit,
-        "Stock_Warning": stock_warning,
-        "Search_Method": method,
-        "Last_Consumption_7_Days": last_consumption,
-        "Predicted_Consumption_7_Days": predicted_7_days
+        "Inventory_ID": iid,
+        "Item_Name": item_name,
+        "Current_Stock": current_stock,
+        "Reorder_Quantity": reorder_quantity,
+        "Email_Status": status_to_save,
+        "Message": "Reorder logged and email processed" + (" (Follow-up)" if send_follow_up else "")
     }
+# Folder path for receipts
+def send_reorder_email(recipient: str, subject: str, body: str):
+    """
+    Sends an email using Gmail API OAuth2.
+    Returns a status string.
+    """
 
-# ----------------------------
-# Dashboard / Report MCP tool
-# ----------------------------
-# ----------------------------
-# Improved Forecasting Engine (Non-Flat Predictions)
-# ----------------------------
-def forecast_item(item_id: str, periods: int = 7, method: str = "Unknown"):
-    df_item = historical_df[historical_df['Inventory_ID'] == str(item_id)].sort_values('Date').copy()
+    # Prepare Gmail API MIME message
+    message = MIMEMultipart()
+    message['to'] = recipient
+    message['subject'] = subject
+    message.attach(MIMEText(body, 'plain'))
+    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-    # ----------------------------
-    # 0️⃣ No historical data → generate synthetic pattern
-    # ----------------------------
-    if df_item.empty:
-        synthetic_forecast = []
-        base = 2  # mild consumption default
-        for d in range(periods):
-            synthetic_forecast.append({
-                "Date": None,
-                "Inventory_ID": item_id,
-                "Predicted_Consumption": round(base + np.sin(d) + np.random.uniform(0, 0.5), 2),
-                "Available_Stock": 0,
-                "Stock_Warning": True,
-                "Search_Method": method
-            })
-        return synthetic_forecast
+    try:
+        # Gmail API scopes
+        SCOPES = ['https://www.googleapis.com/auth/gmail.send']
+        creds = None
 
-    # ----------------------------
-    # 1️⃣ Extract last row + fill missing values
-    # ----------------------------
-    df_item = df_item.sort_values("Date")
-    last_row = df_item.iloc[-1].copy()
+        # Load saved OAuth credentials
+        if os.path.exists('token.json'):
+            with open('token.json', 'rb') as token_file:
+                creds = pickle.load(token_file)
 
-    defaults = {
-        "Closing_Stock": 100,
-        "Lead_Time_Days": 3,
-        "min_stock_limit": 10,
-        "max_capacity": 500
-    }
+        # If expired / no token → re-authenticate
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'client_secret_2_573959129688-mef2hfbg4k6bu0b2e91to9s68681e4rs.apps.googleusercontent.com.json', 
+                    SCOPES
+                )
+                creds = flow.run_local_server(port=0)
 
-    for c, v in defaults.items():
-        if c not in last_row or pd.isna(last_row[c]):
-            last_row[c] = v
+            # Save refreshed token
+            with open('token.json', 'wb') as token_file:
+                pickle.dump(creds, token_file)
 
-    # ----------------------------
-    # 2️⃣ Handle lag columns (ensure 1–7 lags exist)
-    # ----------------------------
-    for lag in range(1, 8):
-        col = f"lag_{lag}"
-        if col not in last_row or pd.isna(last_row[col]):
-            last_row[col] = 0.0
+        # Build Gmail service and send email
+        service = build('gmail', 'v1', credentials=creds)
+        send_message = {'raw': raw_message}
+        service.users().messages().send(userId='me', body=send_message).execute()
 
-    # ----------------------------
-    # 3️⃣ Check if historical consumption is flat
-    # ----------------------------
-    lags = [last_row[f'lag_{i}'] for i in range(1, 8)]
-    lags_sum = sum(lags)
+        return "Email Sent"
 
-    force_variation = (lags_sum == 0)
-
-    # ----------------------------
-    # 4️⃣ Prepare rolling forecast
-    # ----------------------------
-    preds = []
-    available_stock = float(last_row["Closing_Stock"])
-    min_stock_limit = float(last_row["min_stock_limit"])
-
-    for day in range(periods):
-
-        # ----------------------------
-        # Build X features for XGBoost
-        # ----------------------------
-        feat = {
-            "Opening_Stock": float(available_stock),
-            "Closing_Stock": float(available_stock),
-            "Quantity_Restocked": float(last_row.get("Quantity_Restocked", 0.0)),
-            "Lead_Time_Days": float(last_row.get("Lead_Time_Days", 3)),
-            "min_stock_limit": min_stock_limit,
-            "max_capacity": float(last_row.get("max_capacity", 500)),
-            "day_of_week": int((last_row["Date"].dayofweek + day + 1) % 7) if pd.notna(last_row["Date"]) else 0,
-            "month": int((last_row["Date"] + pd.Timedelta(days=day + 1)).month) if pd.notna(last_row["Date"]) else 1
-        }
-
-        for lag in range(1, 8):
-            feat[f'lag_{lag}'] = float(last_row[f'lag_{lag}'])
-
-        # ----------------------------
-        # Predict from XGBoost
-        # ----------------------------
-        try:
-            raw_pred = float(xgb_model.predict(pd.DataFrame([feat]))[0])
-            y_pred = max(0.0, raw_pred)
-        except Exception:
-            y_pred = 0.0
-
-        # ----------------------------
-        # Enforce natural variance if historical values are flat
-        # ----------------------------
-        if force_variation:
-            y_pred = round(1 + np.sin(day) + np.random.uniform(0.2, 0.8), 2)
-
-        # ----------------------------
-        # Smooth seasonal pattern (simple)
-        # ----------------------------
-        seasonal_factor = 1 + 0.1 * np.sin(day)
-        y_pred = round(y_pred * seasonal_factor, 2)
-
-        # ----------------------------
-        # Avoid completely flat predictions
-        # ----------------------------
-        if day > 0 and y_pred == preds[-1]["Predicted_Consumption"]:
-            y_pred += np.random.uniform(0.1, 0.5)
-
-        # ----------------------------
-        # Stock warning
-        # ----------------------------
-        stock_warning = (available_stock - y_pred) < min_stock_limit
-
-        # ----------------------------
-        # Save forecast
-        # ----------------------------
-        next_date = (
-            (last_row["Date"] + pd.Timedelta(days=day + 1)).strftime("%Y-%m-%d")
-            if pd.notna(last_row["Date"])
-            else None
-        )
-
-        preds.append({
-            "Date": next_date,
-            "Inventory_ID": item_id,
-            "Predicted_Consumption": round(y_pred, 2),
-            "Available_Stock": round(available_stock, 2),
-            "Stock_Warning": stock_warning,
-            "Search_Method": method
-        })
-
-        # ----------------------------
-        # Update lags (lag_1 becomes today's prediction)
-        # ----------------------------
-        for lag in range(7, 1, -1):
-            last_row[f"lag_{lag}"] = last_row[f"lag_{lag-1}"]
-        last_row["lag_1"] = y_pred
-
-        # ----------------------------
-        # Update stock
-        # ----------------------------
-        available_stock = max(0.0, available_stock - y_pred)
-
-    return preds
-
-    
-
-# ----------------------------
-# Gmail OAuth Send Email Tool
-# ----------------------------
-SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
-CLIENT_SECRET_FILE = "client_secret.json"  # <-- your Google credentials
-TOKEN_FILE = "token.pickle"
-
-def authenticate_gmail():
-    creds = None
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE, "rb") as t:
-            creds = pickle.load(t)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, "wb") as t:
-            pickle.dump(creds, t)
-    return creds
-
-def send_email_oauth(recipient: str, subject: str, body: str):
-    service = build("gmail", "v1", credentials=authenticate_gmail())
-    msg = MIMEMultipart()
-    msg["to"] = recipient
-    msg["subject"] = subject
-    msg.attach(MIMEText(body, "plain"))
-    raw_msg = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-    service.users().messages().send(userId="me", body={"raw": raw_msg}).execute()
-    return True
+    except Exception as e:
+        return f"Email Failed: {str(e)}"
 
 @mcp.tool
-def send_email(recipient: str, subject: str, body: str):
+
+
+def process_receipts_folder():
     """
-    Sends email notifications using Gmail OAuth authentication.
-    
-    This tool enables the agent to send alerts and reports via email. It uses OAuth2
-    for secure Gmail authentication, requiring valid Google credentials setup.
-    
-    Prerequisites:
-        - Google API credentials file (client_secret.json)
-        - First-time authentication creates token.pickle for subsequent uses
-        - Gmail API must be enabled in Google Cloud Console
-    
-    Args:
-        recipient (str): Email address of the recipient
-        subject (str): Email subject line
-        body (str): Plain text email body content
-    
-    Returns:
-        dict: Operation status containing:
-            - status (str): Either "success", "failed", or "error"
-            - message (str): Success message with recipient email
-            - error (str, optional): Error description if operation failed
-    
-    Use Cases:
-        - Alert when stock falls below minimum threshold
-        - Send daily/weekly inventory reports
-        - Notify about items requiring urgent restocking
-        - Schedule demand forecast notifications
-    
-    Example:
-        >>> send_email("manager@hospital.com", "Low Stock Alert", "Syringes stock critically low")
+    Processes receipts in ~/Documents/receipts, updates inventory_master and consumption table,
+    and automatically triggers reorder if stock is low or 0.
     """
-    try:
-        if not recipient or not subject or not body:
-            return {"status": "error", "error": "Recipient, subject, or body missing"}
-        
-        # Send via Gmail OAuth
-        ok = send_email_oauth(recipient, subject, body)
-        if ok:
-            return {"status": "success", "message": f"Email sent to {recipient}"}
-        else:
-            return {"status": "failed", "message": "Unknown failure"}
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+    RECEIPTS_FOLDER = os.path.expanduser("~/Documents/receipts")
+    os.makedirs(RECEIPTS_FOLDER, exist_ok=True)
+
+    today = datetime.today().date()
+    all_results = []
+
+    files = [f for f in os.listdir(RECEIPTS_FOLDER) if f.lower().endswith(('png','jpg','jpeg','pdf'))]
+
+    for filename in files:
+        file_path = os.path.join(RECEIPTS_FOLDER, filename)
+        text = ""
+
+        # -----------------------------
+        # EXTRACT TEXT FROM FILE
+        # -----------------------------
+        try:
+            if filename.lower().endswith(('png','jpg','jpeg')):
+                img = Image.open(file_path)
+                text = pytesseract.image_to_string(img)
+
+            elif filename.lower().endswith('pdf'):
+                with pdfplumber.open(file_path) as pdf:
+                    for page in pdf.pages:
+                        page_text = page.extract_text()
+                        if page_text:
+                            text += page_text + "\n"
+            else:
+                all_results.append({"filename": filename, "error": "Unsupported file type"})
+                continue
+
+        except Exception as e:
+            all_results.append({"filename": filename, "error": str(e)})
+            continue
+
+        # -----------------------------
+        # PARSE ITEMS (handle separate lines for Item & Quantity)
+        # -----------------------------
+        items = []
+        lines = text.splitlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                i += 1
+                continue
+
+            # Match "Item: <name>"
+            if line.lower().startswith("item:"):
+                item_name = line.split(":", 1)[1].strip()
+                qty = 0
+
+                # Look ahead for "Quantity: <number>"
+                if i + 1 < len(lines) and lines[i + 1].lower().startswith("quantity:"):
+                    try:
+                        qty = float(lines[i + 1].split(":", 1)[1].strip())
+                    except:
+                        qty = 0
+                    i += 1  # skip quantity line
+
+                items.append({"name": item_name, "quantity": qty})
+            i += 1
+
+        if not items:
+            all_results.append({"filename": filename, "error": "No items found"})
+            continue
+
+        # -----------------------------
+        # PROCESS ITEMS
+        # -----------------------------
+        receipt_results = []
+        for item in items:
+            name = item["name"]
+            qty = item["quantity"]
+
+            resolved_list = resolve_inventory_ids(name)
+            if not resolved_list:
+                receipt_results.append({"item": name, "quantity": qty, "status": "Item not found"})
+                continue
+
+            iid = resolved_list[0][0]
+
+            # Current + Min stock
+            cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+            row = cur.fetchone()
+            current_stock = float(row[0]) if row and row[0] is not None else 0
+            min_stock = float(row[1] or 10)
+
+            new_stock = max(0.0, current_stock - qty)
+
+            # Update inventory_master
+            cur.execute("UPDATE inventory_master SET closing_stock=%s WHERE inventory_id=%s",
+                        (new_stock, iid))
+
+            # Insert into consumption
+            transaction_id = str(uuid.uuid4())
+            department = "General"
+            staff_id = "SYSTEM"
+            shift = "Morning"
+            consumption_reason = "Purchase Receipt"
+            batch_lot = None
+
+            cur.execute(
+                """
+                INSERT INTO consumption
+                (transaction_id, inventory_id, quantity_consumed, date,
+                 department, staff_id, shift, consumption_reason, 
+                 remaining_stock, batch_lot)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    transaction_id, iid, qty, today,
+                    department, staff_id, shift, consumption_reason,
+                    new_stock, batch_lot
+                )
+            )
+            conn.commit()
+
+            # Stock status + auto-reorder
+            stock_status = (
+                "In Stock" if new_stock > min_stock
+                else "Low Stock" if new_stock > 0
+                else "Out of Stock"
+            )
+
+            reorder_triggered = None
+            if stock_status in ("Low Stock", "Out of Stock"):
+                reorder_triggered = process_reorder(name, reorder_quantity=10)
+
+            receipt_results.append({
+                "item": name,
+                "quantity_consumed": qty,
+                "Previous_Stock": current_stock,
+                "Updated_Stock": new_stock,
+                "Stock_Status": stock_status,
+                "Reorder_Triggered": reorder_triggered
+            })
+
+        all_results.append({
+            "filename": filename,
+            "processed_items": receipt_results
+        })
+
+        # Delete processed file
+        try:
+            os.remove(file_path)
+        except Exception as e:
+            all_results.append({"filename": filename, "delete_error": str(e)})
+
+    return {"success": True, "receipts_summary": all_results}
+
+@mcp.tool
+def send_email(item_name: str, reorder_quantity: int = 10):
+    """
+    MCP wrapper: Calls the reorder logic which handles initial and follow-up emails.
+    """
+    return process_reorder(item_name, reorder_quantity)
 
 
 # ----------------------------
-# MCP Server Run
+# Run MCP Server
 # ----------------------------
-if __name__ == "__main__":
+if __name__=="__main__":
     print("🚀 Inventory & Demand MCP running on port 8000 (SSE enabled)")
     mcp.run(transport="sse", port=8000)
-# ----------------------------
-# Run MCP
-# ----------------------------
-if __name__ == "__main__":
-    print("🚀 Inventory & Demand MCP running on port 8000...")
-    mcp.run(transport="sse", port=8000)
-

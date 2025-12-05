@@ -1,127 +1,209 @@
+# Supply Chain – Warehousing (Medical Inventory Management)
+
 ## Project Overview
+
 **Project Name:** Supply Chain - Warehousing  
 **Agent Name:** Inventory Management Agent / Medical Inventory Management Agent  
-**Team:** Team 1 - Supply Soul  
-**Contributors:** Megha Narendra Simha, Poorrnima Vetrivelan, Nada Feteiha
+**Team:** Team 1 – *Supply Soul*  
+**Contributors:** **Megha Narendra Simha**, **Poorrnima Vetrivelan**, **Nada Feteiha**
 
-This system helps healthcare facilities efficiently manage medication and supply inventory, forecast demand using machine learning embeddings and semantic search, and automate restocking. It leverages AI agents, a Flask backend, PostgreSQL database, and a React frontend with visualizations.
+This system helps healthcare facilities efficiently manage medication and supply inventory, forecast demand using machine learning embeddings and semantic search, and automate restocking. It leverages AI agents, a Flask backend, a PostgreSQL database, and a React frontend with real-time dashboards and visualizations.
 
 ---
 
 ## Key Goals
-- Maintain real-time inventory levels and generate alerts for low stock.
-- Analyze historical consumption data and forecast future demand.
-- Automate purchase orders with human-in-the-loop approval.
-- Visualize inventory, demand, and forecasts in an interactive dashboard.
+
+- Maintain real-time inventory levels and generate alerts for low stock.  
+- Analyze historical consumption data and forecast future demand.  
+- Provide semantic-search-based intelligent item lookup.  
+- Automate purchase orders with human-in-the-loop approval.  
 
 ---
 
-## Architecture Overview
-- **Frontend (React):** Dashboard with **React Charts** for stock and forecast visualization, human approval UI for purchase orders.
-- **Backend (Python - Flask / FastAPI):** MCP orchestrator, API endpoints, semantic search using embeddings, orchestration of Stock, Demand, and Reorder agents.
-- **AI Agents:**
-  1. **Stock Level Monitor:** Tracks inventory, generates low-stock alerts, summarizes inventory in CSV and charts.
-- **Demand Forecaster:** Analyzes historical consumption trends and seasonal patterns; generates time-series forecasts.
-  3. **Reorder Automator:** Generates purchase orders based on low-stock and forecast, supports human approval, updates inventory and order tracking.
-- **Database (PostgreSQL):** Stores historical consumption, stock, vendor data; tables include `inventory_master`, `consumption`, `finance`, `vendor_master`, `inventory_department_mapping`.
-## Medical Inventory Management System
+## Repository Overview
 
-**Project Name:** Supply Chain - Warehousing
+This repository contains the complete implementation of the **Medical Inventory Management System** with:
 
-**Agent Name:** Inventory Management Agent / Medical Inventory Management Agent
+- 🧠 AI agents for stock monitoring, forecasting, and restocking  
+- 🔄 MCP-based agent orchestration  
+- 🗄️ Flask backend with PostgreSQL  
+- 🖥️ React dashboard with chatbot interface  
+- 📊 Visualizations for consumption, forecasting, and stock levels  
+- Agents implemented - https://black-island-0a930ab0f.3.azurestaticapps.net/#/group-agent?project_id=70163161-6e90-424b-be6b-56becd667fc0
 
-**Team:** Team 1 - Supply Soul
+---
 
-**Contributors:** Megha Narendra Simha, Poorrnima Vetrivelan, Nada Feteiha
+## Repository Layout
 
-Overview
---------
-This repository implements an inventory management system for healthcare facilities. It provides:
-- real-time stock tracking and low-stock alerts
-- demand forecasting using historical trend analysis and semantic search
-- automated purchase-order generation with human-in-the-loop approval
-- a React dashboard for visualization
 
-Architecture
-------------
-- Frontend: React (in `Frontend/`) — dashboard, charts, approval UI
-- Backend: Python Flask (in `Backend/`) — API, MCP orchestration, semantic search
-- AI: Demand forecaster with semantic search, sentence-transformer embeddings for inventory resolution
-- Database: PostgreSQL (schema files at repo root)
+---
 
-Requirements
-------------
-- macOS / Linux / Windows
-- Python 3.9+
-- Node.js + npm or yarn
-- PostgreSQL
-- `ngrok` (optional, for public tunneling)
+## Quick Start (Developer Guide)
 
-Consolidated Setup (single block)
----------------------------------
-Run the commands below from your shell (zsh on macOS). Replace placeholders like `<repo_url>`, `<db_user>`, and `<db_name>`.
+### ✅ Prerequisites
+
+- macOS / Linux / Windows  
+- Python **3.9–3.11**  
+- Node.js + npm  
+- PostgreSQL  
+- (Optional) Homebrew for macOS  
+
+---
+
+## ⚙️ Backend Setup
+
+### 1. Create a virtual environment
 
 ```bash
-# 1. Clone repository
-git clone <repo_url>
-cd Team1_LowCodeAgenthon
-
-# 2. Backend: create & activate virtualenv (macOS/Linux)
 cd Backend
 python3 -m venv venv
 source venv/bin/activate
-pip install --upgrade pip
+pip install --upgrade pip setuptools wheel
+
+Install dependencies
 pip install -r requirements.txt
-pip install fastmcp
+pip install flask flask-cors psycopg2-binary pandas numpy piper-tts
 
-# 3. PostgreSQL: load schema and (optional) full dump (run from repo root)
-# Make sure PostgreSQL is running and you have a user & database created
-psql -U <db_user> -d <db_name> -f ../schema_only.sql
-psql -U <db_user> -d <db_name> -f ../full_dump.sql
+Database setup
+psql -U <db_user> -d <db_name> -f schema_only.sql
+# Optional: full dump
+# psql -U <db_user> -d <db_name> -f full_dump.sql
+Prepare embeddings
+python3 Backend/semantic_search/vectorembedding.py
 
-# 4. Generate sentence-transformer embeddings for semantic search
-python3 semantic_search/vectorembedding.py
 
-# 5. Start MCP orchestration (if applicable)
-python3 semantic_search/combine_mcp_demand_stock_withss.py
+Start Backend
+cd Backend
+source venv/bin/activate
+python app.py
 
-# 6. (Optional) expose local backend with ngrok
-# install ngrok separately and run:
-ngrok http 8000
+pip install piper-tts
+cd Backend
+python3 -c "from piper.download import ensure_model_cached; ensure_model_cached('en_US-lessac-medium')"
+POST /api/tts
+Body: { "text": "Hello" }
+Returns: WAV audio file
 
-# 7. Start Flask backend (adjust port or env vars as needed)
-python3 app.py
-
-# 8. Frontend: open a new terminal, install and run dev server
-cd ../Frontend
+cd Frontend
 npm install
 npm run dev
-
-# 9. Visit the app in your browser (default Vite port is 5173)
-echo "Frontend running at http://localhost:5173"
-
+http://localhost:5173
 ```
+Developer Notes
 
-Notes
------
-- File locations in this repo:
-  - Backend code: `Backend/` (contains `app.py`, API modules, `semantic_search/`)
-  - Frontend app: `Frontend/` (Vite + React)
-  - DB schema & dumps: `schema_only.sql`, `full_dump.sql` (repo root)
+Recommended Python versions: 3.9–3.11
 
-- If you run into missing package errors, activate the virtualenv (`source Backend/venv/bin/activate`) and install the missing package with `pip install <pkg>`.
-- Use Python 3.9+ and `python3` explicitly on macOS to avoid conflicts with system Python.
+Install torch before sentence-transformers for compatibility.
 
-Development tips
-----------------
-- To run backend APIs locally: activate the Backend virtualenv and run `python3 app.py`.
-- Demand forecasting uses historical consumption data for pattern analysis.
-- For semantic search troubleshooting, check the embeddings file (if created) and the `semantic_search/` scripts.
-- Test queries in Test_queries.docx
+Add cache folders (e.g., __pycache__/) to .gitignore.
 
-Future enhancements
--------------------
-- Voice interface (React + Web Speech API)
-- Email notifications for low-stock alerts and POs
+--------------------------------------------------------------------------------------------
+Team Task Split & Contributions
+🧠 Multi-Agent System & Backend
 
+MCP Coding (Core Framework) — Megha N
 
+Agent Orchestration Layer — Poornima Vetrivelan
+
+Conversational Agent — Megha N
+
+Background Agent (Real-time DB updates) — Megha N
+
+Semantic Search — Megha N
+
+Inventory Update Agent — Megha N
+
+Mail Agent (Automated PO Emails) — Megha N
+
+📦 Supply Chain AI Agents
+
+Agent 1 — Stock Level Monitor — Megha N
+
+Agent 2 — Demand Forecaster — Megha N
+
+Agent 3 — Reorder Automator — Poorrnima Vetrivelan
+
+📊 Frontend & UI
+
+Conversational Agent UI (Home Page) — Nada Feteiha
+
+Inventory Stock Monitor & Forecast UI — Nada Feteiha
+
+Purchase Order Review Page — Nada Feteiha
+
+Dashboard & Visualizations — Poorrnima Vetrivelan
+
+🔧 Supporting Work
+
+GitHub Repository Setup — Megha N
+
+Input Files (CSV, Sample Data) — Poorrnima Vetrivelan
+
+--------------------------------------------------------------------------------------------
+💬 Feedback on the iGentIC Platform
+
+We found the iGentIC platform extremely useful for building multi-agent systems with minimal effort. The low-code environment allowed us to focus mainly on:
+
+Designing and building AI agents
+
+Implementing core logic
+
+MCP-based multi-agent orchestration
+
+Real-time integration with backend and database
+
+✅ What Worked Well
+
+Low-code environment sped up agent development
+
+Smooth UI for testing and triggering agents
+
+Easy integration for both conversational and background agents
+
+🔧 Suggestions for Improvement
+
+Make knowledge base upload more streamlined
+
+Add support for multiple cloud providers
+
+Provide detailed demo videos covering full platform functionality
+
+Add rename/edit options in more UI sections
+
+Overall, the platform provided a strong foundation for building our multi-agent inventory management system. With a few enhancements, it can become even more powerful for future teams.
+
+------------------------------------------------------------------------------------------
+
+Frontend
+	React
+	Dashboard, voice interface, human approval UI
+
+Backend
+	Python (Flask / FastAPI) MCP
+	API endpoints, orchestration logic
+
+AI Agents
+	Open AI
+	Forecasting, summarization, query handling
+
+Voice/Video
+	TTS
+	
+
+Data + DB
+	PostGres + Knowledge base
+	Inventory, consumption, and supplier data
+
+Visualization
+	matplotlib / Plotly / React Charts
+	Graphs, stock vs threshold, forecasts
+
+Workflow Orchestration
+	iGentic Platform
+	Multi-agent pipeline control
+
+Version Control
+	GitHub
+	Code management
+
+![alt text](Screenshot 2025-12-05 at 11.39.04 AM-1.png) ![alt text](<Screenshot 2025-12-05 at 11.39.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.40 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.05 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.55 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.39 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.54.44 AM.png>)

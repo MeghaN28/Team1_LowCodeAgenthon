@@ -370,6 +370,60 @@
   transform: translateY(-2px);
 }
 
+/* Send button (global) */
+.send-button {
+  padding: 0.5rem 1rem;
+  background: #4facfe;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.send-button:hover {
+  background: #3d8bfe;
+  transform: translateY(-2px);
+}
+
+/* Pagination buttons (global) */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  background: white;
+  color: #1e293b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-controls button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-controls .active {
+  background: #667eea;
+  color: white;
+  border: 1px solid #667eea;
+}
+
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
@@ -403,6 +457,60 @@
   .inventory-table {
     min-width: 800px;
   }
+  /* Send button next to search bar */
+.send-button {
+  padding: 0.5rem 1rem;
+  background: #4facfe;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.send-button:hover {
+  background: #3d8bfe;
+  transform: translateY(-2px);
+}
+
+/* Pagination buttons */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  background: white;
+  color: #1e293b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-controls button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-controls .active {
+  background: #667eea;
+  color: white;
+  border: 1px solid #667eea;
+}
+
 }
 
 

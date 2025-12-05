@@ -1,0 +1,201 @@
+date,inventory_id,opening_stock,quantity_consumed,quantity_restocked,closing_stock,vendor_id,lead_time_days,department_count,min_stock,max_capacity,item_name,form,use,item_type,out_of_stock,low_stock
+2025-12-01,INV0001,22,6,5,21,VEND006,2,5,19,98,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0002,39,14,93,118,VEND001,2,1,17,137,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0003,36,34,59,61,VEND004,6,1,8,108,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0004,135,92,22,65,VEND013,7,3,13,191,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0005,17,10,5,12,VEND019,6,3,9,61,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0006,71,58,62,75,VEND003,10,3,20,142,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0007,57,15,36,78,VEND001,7,2,12,106,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0008,55,45,34,44,VEND008,1,4,8,108,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0009,57,19,92,130,VEND014,3,4,17,213,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0010,55,49,47,53,VEND017,8,3,8,166,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0011,58,9,19,68,VEND004,4,3,7,81,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0012,18,8,0,10,VEND006,8,2,16,88,Antacids,Drug,Digestive,Drug,False,True
+2025-12-01,INV0013,63,2,5,66,VEND012,4,2,16,113,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0014,55,48,1,8,VEND003,3,5,6,56,Surgical caps,Device,Surgery,Consumable,False,False
+2025-12-01,INV0015,128,47,38,119,VEND001,6,4,19,219,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0016,121,15,7,113,VEND018,10,4,11,132,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0017,49,7,49,91,VEND003,1,3,7,101,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0018,11,10,31,32,VEND018,8,4,5,86,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0019,51,26,41,66,VEND012,1,4,6,161,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0020,68,36,20,52,VEND016,9,4,9,88,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0021,69,17,114,166,VEND020,2,2,13,191,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0022,29,25,13,17,VEND004,6,4,15,73,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0023,97,27,75,145,VEND006,5,4,19,181,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0024,39,36,23,26,VEND004,8,5,13,66,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0025,80,69,5,16,VEND013,2,4,19,99,Catheters,Device,Urinary,Consumable,False,True
+2025-12-01,INV0026,193,106,0,87,VEND008,9,4,10,196,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0027,15,10,127,132,VEND017,5,5,7,195,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0028,38,31,10,17,VEND003,1,5,8,95,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0029,120,108,5,17,VEND016,10,4,5,131,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0030,111,20,32,123,VEND020,2,1,6,186,Cotton rolls,Consumable,Wound Care,Consumable,False,False
+2025-12-01,INV0031,85,8,14,91,VEND004,6,3,8,121,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0032,36,7,67,96,VEND004,9,1,18,128,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0033,56,7,1,50,VEND001,3,4,18,117,Insulin,Drug,Diabetes,Drug,False,False
+2025-12-01,INV0034,84,18,12,78,VEND013,4,4,5,98,Surgical caps,Device,Surgery,Consumable,False,False
+2025-12-01,INV0035,16,10,33,39,VEND005,9,3,14,76,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0036,18,16,89,91,VEND020,3,5,17,115,Surgical caps,Device,Surgery,Consumable,False,False
+2025-12-01,INV0037,64,24,78,118,VEND017,6,3,13,145,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0038,94,86,20,28,VEND017,9,3,14,118,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0039,177,174,19,22,VEND002,5,1,12,202,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0040,101,14,23,110,VEND018,3,5,11,165,Cotton rolls,Consumable,Wound Care,Consumable,False,False
+2025-12-01,INV0041,54,17,28,65,VEND009,10,1,11,88,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0042,67,53,22,36,VEND007,2,3,9,110,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0043,34,33,84,85,VEND001,2,5,13,141,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0044,34,30,98,102,VEND001,2,3,13,145,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0045,143,97,42,88,VEND005,4,3,15,200,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0046,67,16,27,78,VEND019,8,1,14,100,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0047,21,6,9,24,VEND005,3,4,15,157,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0048,33,15,43,61,VEND017,2,1,16,88,IV sets,Device,Fluid Therapy,Consumable,False,False
+2025-12-01,INV0049,88,25,6,69,VEND007,5,2,17,100,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0050,57,34,65,88,VEND008,3,5,12,169,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0051,113,21,11,103,VEND006,4,2,16,135,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0052,53,48,4,9,VEND018,4,2,13,119,Syringes,Device,Injection,Consumable,False,True
+2025-12-01,INV0053,81,51,0,30,VEND014,4,2,13,147,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0054,8,1,64,71,VEND019,4,5,8,89,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0055,104,17,2,89,VEND015,6,2,7,185,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0056,87,50,1,38,VEND013,7,4,10,89,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0057,167,69,12,110,VEND016,7,5,5,188,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0058,106,73,7,40,VEND011,7,3,6,128,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0059,132,105,7,34,VEND001,2,4,12,149,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0060,22,16,34,40,VEND003,1,1,7,91,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0061,118,34,13,97,VEND002,5,1,10,168,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0062,43,3,35,75,VEND012,2,2,6,92,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0063,88,58,60,90,VEND008,3,4,20,197,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0064,71,3,38,106,VEND009,5,4,5,200,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0065,137,71,7,73,VEND018,3,4,19,193,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0066,27,19,39,47,VEND016,2,5,17,76,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0067,20,10,151,161,VEND006,7,3,18,191,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0068,37,8,59,88,VEND006,7,5,6,115,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0069,81,80,38,39,VEND015,8,1,10,136,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0070,144,6,5,143,VEND005,8,3,17,149,Painkillers,Drug,Pain Relief,Drug,False,False
+2025-12-01,INV0071,140,51,5,94,VEND011,9,1,5,148,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0072,93,53,69,109,VEND001,2,5,20,172,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0073,44,17,46,73,VEND007,5,1,15,105,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0074,19,18,17,18,VEND010,7,5,5,60,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0075,28,10,29,47,VEND011,10,4,8,62,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0076,56,3,35,88,VEND015,10,3,20,106,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0077,39,5,17,51,VEND002,4,2,13,76,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0078,55,30,14,39,VEND016,1,1,18,86,Insulin,Drug,Diabetes,Drug,False,False
+2025-12-01,INV0079,133,19,25,139,VEND015,10,2,17,187,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0080,77,41,40,76,VEND013,6,4,6,125,Cotton rolls,Consumable,Wound Care,Consumable,False,False
+2025-12-01,INV0081,57,29,10,38,VEND007,10,5,16,118,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0082,58,52,1,7,VEND018,2,2,20,94,Medications,Drug,Treatment,Drug,False,True
+2025-12-01,INV0083,79,41,11,49,VEND014,6,4,8,207,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0084,55,18,6,43,VEND003,8,1,13,91,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0085,39,28,98,109,VEND013,5,3,11,175,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0086,59,29,29,59,VEND015,6,4,12,189,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0087,164,10,9,163,VEND003,6,4,12,183,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0088,36,21,63,78,VEND009,7,2,7,101,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0089,126,12,18,132,VEND001,2,3,6,152,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0090,100,73,0,27,VEND011,9,4,17,111,Painkillers,Drug,Pain Relief,Drug,False,False
+2025-12-01,INV0091,144,71,29,102,VEND020,5,3,16,175,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0092,13,5,4,12,VEND011,4,2,11,76,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0093,48,33,14,29,VEND018,3,1,17,107,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0094,51,14,22,59,VEND015,4,5,13,99,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0095,124,44,2,82,VEND016,4,4,17,126,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0096,54,40,119,133,VEND015,4,3,7,184,Surgical caps,Device,Surgery,Consumable,False,False
+2025-12-01,INV0097,90,30,41,101,VEND019,4,5,8,192,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0098,20,13,10,17,VEND020,4,1,20,89,Defibrillator pads,Equipment,Emergency,Equipment,False,True
+2025-12-01,INV0099,21,4,92,109,VEND018,10,2,10,119,IV sets,Device,Fluid Therapy,Consumable,False,False
+2025-12-01,INV0100,28,1,2,29,VEND013,1,3,10,61,IV sets,Device,Fluid Therapy,Consumable,False,False
+2025-12-01,INV0101,87,26,18,79,VEND015,5,3,19,105,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0102,20,10,61,71,VEND016,7,2,10,107,Surgical caps,Device,Surgery,Consumable,False,False
+2025-12-01,INV0103,109,56,10,63,VEND010,6,5,16,158,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0104,117,82,2,37,VEND017,8,5,7,141,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0105,76,35,25,66,VEND012,5,5,6,157,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0106,36,16,2,22,VEND016,10,1,5,59,Cotton rolls,Consumable,Wound Care,Consumable,False,False
+2025-12-01,INV0107,52,36,10,26,VEND018,9,1,12,70,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0108,55,55,60,60,VEND007,10,5,8,173,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0109,16,2,74,88,VEND018,1,4,10,151,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0110,23,0,30,53,VEND020,8,3,20,99,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0111,19,9,35,45,VEND016,8,4,12,122,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0112,57,51,59,65,VEND018,4,4,7,135,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0113,30,5,31,56,VEND007,4,4,6,62,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0114,65,17,68,116,VEND010,9,2,10,175,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0115,177,36,12,153,VEND008,2,3,20,201,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0116,87,8,13,92,VEND008,5,1,18,114,Painkillers,Drug,Pain Relief,Drug,False,False
+2025-12-01,INV0117,59,43,7,23,VEND018,4,2,7,140,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0118,81,35,3,49,VEND014,6,3,9,95,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0119,12,6,1,7,VEND019,6,3,10,75,Thermometer,Equipment,Monitoring,Equipment,False,True
+2025-12-01,INV0120,106,50,18,74,VEND015,4,4,17,152,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0121,175,71,8,112,VEND006,6,3,6,196,Insulin,Drug,Diabetes,Drug,False,False
+2025-12-01,INV0122,169,43,15,141,VEND001,3,4,17,194,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0123,65,46,61,80,VEND008,3,4,16,146,Insulin,Drug,Diabetes,Drug,False,False
+2025-12-01,INV0124,58,10,1,49,VEND014,3,5,6,81,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0125,22,13,37,46,VEND019,6,3,9,137,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0126,66,64,10,12,VEND011,4,5,9,163,Cotton rolls,Consumable,Wound Care,Consumable,False,False
+2025-12-01,INV0127,130,109,15,36,VEND004,7,5,20,152,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0128,105,20,3,88,VEND015,6,1,10,115,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0129,89,47,19,61,VEND011,10,5,16,111,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0130,145,76,1,70,VEND011,5,5,20,189,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0131,17,9,104,112,VEND018,8,3,14,205,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0132,25,1,10,34,VEND016,4,4,20,174,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0133,56,23,3,36,VEND007,9,1,12,71,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0134,137,41,9,105,VEND010,6,1,5,172,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0135,51,18,19,52,VEND017,9,3,15,106,Antibiotics,Drug,Infection,Drug,False,False
+2025-12-01,INV0136,36,36,53,53,VEND019,2,2,7,95,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0137,76,30,16,62,VEND005,7,1,12,149,IV sets,Device,Fluid Therapy,Consumable,False,False
+2025-12-01,INV0138,29,12,6,23,VEND006,1,3,7,114,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0139,145,81,6,70,VEND004,8,2,7,155,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0140,95,10,7,92,VEND012,2,5,10,147,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0141,27,6,31,52,VEND013,3,4,15,72,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0142,34,28,8,14,VEND007,6,1,12,92,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0143,48,29,59,78,VEND011,6,2,5,118,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0144,115,98,1,18,VEND009,6,2,11,116,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0145,66,18,37,85,VEND005,1,1,7,178,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0146,107,32,53,128,VEND003,2,4,6,172,Painkillers,Drug,Pain Relief,Drug,False,False
+2025-12-01,INV0147,23,15,49,57,VEND006,10,3,5,151,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0148,68,48,41,61,VEND008,7,3,8,144,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0149,22,22,82,82,VEND014,2,1,18,111,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0150,62,18,7,51,VEND001,3,1,5,123,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0151,135,89,14,60,VEND019,4,4,17,179,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0152,47,10,13,50,VEND010,6,4,14,69,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0153,55,21,30,64,VEND017,3,2,17,110,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0154,96,68,31,59,VEND002,10,3,8,129,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0155,24,5,25,44,VEND006,5,1,18,69,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0156,101,34,27,94,VEND004,1,2,19,135,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0157,41,12,85,114,VEND010,8,3,14,154,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0158,173,44,11,140,VEND009,2,3,15,188,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0159,154,28,26,152,VEND006,4,1,19,180,BP Monitor,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0160,50,30,34,54,VEND006,5,1,18,156,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0161,44,3,0,41,VEND002,10,5,13,71,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0162,84,46,11,49,VEND011,5,4,11,125,IV sets,Device,Fluid Therapy,Consumable,False,False
+2025-12-01,INV0163,36,1,0,35,VEND017,7,5,7,60,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0164,73,4,2,71,VEND003,2,4,6,77,Medications,Drug,Treatment,Drug,False,False
+2025-12-01,INV0165,17,10,7,14,VEND012,7,3,16,195,Defibrillator pads,Equipment,Emergency,Equipment,False,True
+2025-12-01,INV0166,139,113,20,46,VEND017,4,1,6,182,Nebulizer kit,Equipment,Respiratory,Equipment,False,False
+2025-12-01,INV0167,56,3,96,149,VEND009,3,5,19,183,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0168,48,9,41,80,VEND001,7,5,12,102,Gloves,Device,Protection,Consumable,False,False
+2025-12-01,INV0169,36,36,11,11,VEND003,10,4,10,100,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0170,120,30,19,109,VEND002,5,3,18,162,IV sets,Device,Fluid Therapy,Consumable,False,False
+2025-12-01,INV0171,80,31,35,84,VEND015,10,1,7,178,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0172,43,18,149,174,VEND012,2,5,9,195,Syringes,Device,Injection,Consumable,False,False
+2025-12-01,INV0173,93,8,89,174,VEND018,3,2,16,192,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0174,127,90,56,93,VEND001,2,5,11,210,Alcohol swabs,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0175,27,23,48,52,VEND018,5,1,19,89,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0176,164,93,27,98,VEND009,1,3,6,191,Masks,Device,Protection,Consumable,False,False
+2025-12-01,INV0177,24,21,20,23,VEND014,5,4,20,92,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0178,57,47,24,34,VEND008,9,3,19,123,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0179,44,23,98,119,VEND006,4,3,17,208,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0180,70,39,21,52,VEND001,3,1,10,115,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0181,30,26,56,60,VEND009,8,3,9,104,Insulin,Drug,Diabetes,Drug,False,False
+2025-12-01,INV0182,82,66,13,29,VEND002,5,3,19,197,Bandages,Device,Wound Care,Consumable,False,False
+2025-12-01,INV0183,48,18,90,120,VEND016,3,3,8,142,Defibrillator pads,Equipment,Emergency,Equipment,False,False
+2025-12-01,INV0184,42,2,22,62,VEND020,7,3,10,69,Antacids,Drug,Digestive,Drug,False,False
+2025-12-01,INV0185,106,34,55,127,VEND020,3,2,16,165,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0186,44,1,67,110,VEND008,10,2,15,130,Glucometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0187,66,65,4,5,VEND010,1,3,13,207,Insulin,Drug,Diabetes,Drug,False,True
+2025-12-01,INV0188,48,1,44,91,VEND002,7,5,15,101,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0189,108,18,24,114,VEND006,6,2,8,132,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0190,149,142,7,14,VEND013,6,2,18,167,Catheters,Device,Urinary,Consumable,False,True
+2025-12-01,INV0191,69,68,65,66,VEND016,2,3,18,156,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0192,71,39,15,47,VEND006,10,5,10,88,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0193,67,18,53,102,VEND015,10,1,14,174,Thermometer,Equipment,Monitoring,Equipment,False,False
+2025-12-01,INV0194,79,22,35,92,VEND011,10,3,9,188,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0195,122,50,5,77,VEND007,9,5,19,130,Antiseptics,Consumable,Disinfection,Consumable,False,False
+2025-12-01,INV0196,117,115,10,12,VEND008,3,4,20,127,Thermometer,Equipment,Monitoring,Equipment,False,True
+2025-12-01,INV0197,66,66,52,52,VEND007,10,3,19,142,Catheters,Device,Urinary,Consumable,False,False
+2025-12-01,INV0198,104,48,9,65,VEND006,5,3,8,141,Steroids,Drug,Hormone Therapy,Drug,False,False
+2025-12-01,INV0199,134,1,12,145,VEND002,1,2,18,176,Cardiovascular drugs,Drug,Cardio Care,Drug,False,False
+2025-12-01,INV0200,29,0,39,68,VEND017,9,5,19,83,Masks,Device,Protection,Consumable,False,False

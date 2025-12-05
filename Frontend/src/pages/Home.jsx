@@ -19,24 +19,25 @@ function Home() {
     'out-of-stock': 'Out of Stock'
   }
 
-  const getStockStatus = (item) => {
-    if (item.quantity === 0) return 'out-of-stock'
-    if (item.quantity <= item.threshold) return 'low-stock'
-    return 'in-stock'
-  }
+const getStockStatus = (item) => {
+  if (item.quantity === 0) return 'out-of-stock';
+  if (item.quantity > 0 && item.quantity <= item.threshold) return 'low-stock';
+  return 'in-stock';
+}
 
-  // Fetch real inventory data from backend API
+
+  // Fetch inventory
   useEffect(() => {
-    fetch("http://127.0.0.1:8080/api/inventory") // Replace with your API port
+    fetch("http://127.0.0.1:8080/api/inventory")
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           const formatted = data.items.map(item => ({
             id: item.inventory_id,
             name: item.item_name,
-            category: item.item_type,
-            quantity: item.initial_stock || 0,
-            threshold: item.minimum_required || 0
+            category: item.item_type || 'Unknown',
+            quantity: item.current_stock || 0,
+            threshold: item.min_stock || 0
           }))
           setInventory(formatted)
         }
@@ -48,7 +49,9 @@ function Home() {
       })
   }, [])
 
+  // Filter and sort inventory
   const filteredAndSortedInventory = useMemo(() => {
+    // 1️⃣ Filter by search term and stock status
     let filtered = inventory.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
       const status = getStockStatus(item)
@@ -57,6 +60,19 @@ function Home() {
       return matchesSearch && matchesStockStatus
     })
 
+    // 2️⃣ Remove duplicates by name if not 'All'
+    if (selectedStockStatus !== 'All') {
+      const seen = new Set()
+      filtered = filtered.filter(item => {
+        if (!seen.has(item.name.toLowerCase())) {
+          seen.add(item.name.toLowerCase())
+          return true
+        }
+        return false
+      })
+    }
+
+    // 3️⃣ Sort the filtered array
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -82,7 +98,7 @@ function Home() {
     'out-of-stock': '#ef4444'
   }
 
-  // Calculate stats
+  // Stats: always use full inventory
   const stats = {
     total: inventory.length,
     inStock: inventory.filter(item => getStockStatus(item) === 'in-stock').length,
@@ -90,9 +106,7 @@ function Home() {
     outOfStock: inventory.filter(item => getStockStatus(item) === 'out-of-stock').length
   }
 
-  if (loading) {
-    return <div className="loading">Loading inventory...</div>
-  }
+  if (loading) return <div className="loading">Loading inventory...</div>
 
   return (
     <div className="home-page">
