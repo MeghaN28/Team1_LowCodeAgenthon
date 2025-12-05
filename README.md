@@ -29,6 +29,7 @@ This repository contains the complete implementation of the **Medical Inventory 
 - 🗄️ Flask backend with PostgreSQL  
 - 🖥️ React dashboard with chatbot interface  
 - 📊 Visualizations for consumption, forecasting, and stock levels  
+- Agents implemented - https://black-island-0a930ab0f.3.azurestaticapps.net/#/group-agent?project_id=70163161-6e90-424b-be6b-56becd667fc0
 
 ---
 
@@ -95,7 +96,7 @@ Recommended Python versions: 3.9–3.11
 Install torch before sentence-transformers for compatibility.
 
 Add cache folders (e.g., __pycache__/) to .gitignore.
-
+--------------------------------------------------------------------------------------------
 Team Task Split & Contributions
 🧠 Multi-Agent System & Backend
 
@@ -138,7 +139,7 @@ POC on iGentIC — Megha N
 GitHub Repository Setup — Megha N
 
 Input Files (CSV, Sample Data) — Poorrnima Vetrivelan
-
+--------------------------------------------------------------------------------------------
 💬 Feedback on the iGentIC Platform
 
 We found the iGentIC platform extremely useful for building multi-agent systems with minimal effort. The low-code environment allowed us to focus mainly on:
