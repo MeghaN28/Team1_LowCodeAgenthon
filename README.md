@@ -170,10 +170,7 @@ Provide detailed demo videos covering full platform functionality
 Add rename/edit options in more UI sections
 
 Overall, the platform provided a strong foundation for building our multi-agent inventory management system. With a few enhancements, it can become even more powerful for future teams.
-Application Screenshots
-Layer
-	Technology
-	Purpose
+------------------------------------------------------------------------------------------
 
 Frontend
 	React
@@ -207,3 +204,4 @@ Version Control
 	GitHub
 	Code management
 
+![alt text](<Screenshot 2025-12-05 at 11.39.04 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.40 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.05 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.55 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.39 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.54.44 AM.png>)
