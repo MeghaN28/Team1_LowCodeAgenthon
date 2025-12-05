@@ -11,11 +11,7 @@ inventory_api = Blueprint('inventory_api', __name__)
 # Database connection
 def get_db_connection():
     return psycopg2.connect(
-        host="localhost",
-        port="5432",
-        dbname="medical_inventory_db",
-        user="meghanarendrasimha",
-        password="Welcome@123"
+  
     )
 
 # Compute stock status safely

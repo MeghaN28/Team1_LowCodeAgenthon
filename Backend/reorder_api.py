@@ -7,11 +7,7 @@ reorder_api = Blueprint("reorder_api", __name__)
 
 def get_connection():
     return psycopg2.connect(
-        host="localhost",
-        port="5432",
-        dbname="medical_inventory_db",
-        user="meghanarendrasimha",
-        password="Welcome@123"
+     
     )
 
 # Internal helper function (not a route)

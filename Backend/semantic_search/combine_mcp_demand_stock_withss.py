@@ -32,6 +32,8 @@ import pytesseract
 from datetime import datetime
 import uuid
 from datetime import date
+from datetime import datetime, timedelta
+
 # ----------------------------
 # Initialize MCP
 # ----------------------------
@@ -41,11 +43,7 @@ mcp = FastMCP("Inventory & Demand MCP 📦🧠")
 # PostgreSQL setup
 # ----------------------------
 conn = psycopg2.connect(
-    host="localhost",
-    port="5432",
-    dbname="medical_inventory_db",
-    user="meghanarendrasimha",
-    password="Welcome@123"
+
 )
 cur = conn.cursor()
 
@@ -148,41 +146,71 @@ def fetch_inventory_data(item_ids):
 import pandas as pd
 import numpy as np
 
-def forecast_item(item_ids, periods: int = 7):
+def forecast_item(item_ids, start_date=None, end_date=None, periods=7):
+    """
+    Forecast or show historical consumption for item_ids.
+    
+    Parameters:
+    - item_ids: list of inventory IDs
+    - start_date: datetime.date or string (optional)
+    - end_date: datetime.date or string (optional)
+    - periods: number of days to forecast (used if no start_date)
+    """
     forecasts = []
     today = pd.Timestamp.today().normalize()
+    
+    # Determine range
+    if start_date:
+        start_date = pd.to_datetime(start_date).normalize()
+    else:
+        start_date = today
+    
+    if end_date:
+        end_date = pd.to_datetime(end_date).normalize()
+    else:
+        end_date = start_date + pd.Timedelta(days=periods-1)
+    
     for iid in item_ids:
+        # Fetch historical consumption
         cur.execute("""
             SELECT date, quantity_consumed 
             FROM consumption 
-            WHERE inventory_id=%s AND date >= %s
+            WHERE inventory_id=%s AND date BETWEEN %s AND %s
             ORDER BY date ASC
-        """, (iid, today - pd.Timedelta(days=6)))
+        """, (iid, start_date, end_date))
         rows = cur.fetchall()
 
-        # Fix: r[0] might already be a date
-        daily_consumption = {r[0]: float(r[1] or 0) for r in rows}
-
+        daily_consumption = {r[0].date() if isinstance(r[0], pd.Timestamp) else r[0]: float(r[1] or 0) for r in rows}
         avg_consumption = np.mean(list(daily_consumption.values())) if daily_consumption else 2.0
 
+        # Get stock info
         cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
         row = cur.fetchone()
         available_stock = float(row[0]) if row and row[0] is not None else 100.0
         min_stock_limit = float(row[1]) if row and row[1] is not None else 10.0
 
-        for day in range(periods):
-            date = (today + pd.Timedelta(days=day)).date()
-            consumed_today = daily_consumption.get(date, avg_consumption)
-            y_pred = consumed_today * (1 + 0.05*np.sin(day))
-            stock_warning = (available_stock - y_pred) < min_stock_limit
+        # Generate forecast/historical data for the range
+        num_days = (end_date - start_date).days + 1
+        for day in range(num_days):
+            date = (start_date + pd.Timedelta(days=day)).date()
+            
+            # Use historical if available, else predict
+            consumed_today = daily_consumption.get(date, avg_consumption * (1 + 0.05*np.sin(day)))
+            
+            # Check stock limit
+            stock_warning = (available_stock - consumed_today) < min_stock_limit
+            consumed_today = min(consumed_today, available_stock)  # cannot consume more than available
+            
             forecasts.append({
                 "Date": date.strftime("%Y-%m-%d"),
                 "Inventory_ID": iid,
-                "Predicted_Consumption": round(y_pred, 2),
+                "Predicted_Consumption": round(consumed_today, 2),
                 "Available_Stock": round(available_stock, 2),
                 "Stock_Warning": stock_warning
             })
-            available_stock = max(0.0, available_stock - y_pred)
+            
+            available_stock = max(0.0, available_stock - consumed_today)
+    
     return forecasts
 
 # ----------------------------
@@ -338,12 +366,57 @@ def update_inventory_after_purchase(item_name: str, quantity_purchased: float):
 
     return result
 
+import calendar
+
 @mcp.tool
-def predict_demand(item_name: str):
+def predict_demand(item_name: str, period: str = None):
+    """
+    Predict or show historical consumption for an item based on period.
+
+    period options:
+    - "last_week": last 7 days from today
+    - "this_week": current week
+    - "last_month": previous month
+    - "month_name": e.g., "august", "september"
+    - None: defaults to next 7 days forecast
+    """
     resolved_list = resolve_inventory_ids(item_name)
-    if not resolved_list: return {"error": f"Inventory '{item_name}' not found"}
-    item_ids = [iid for iid,_ in resolved_list]
-    return forecast_item(item_ids)
+    if not resolved_list:
+        return {"error": f"Inventory '{item_name}' not found"}
+    
+    item_ids = [iid for iid, _ in resolved_list]
+
+    # Determine date range
+    today = pd.Timestamp.today().normalize()
+    start_date = None
+    end_date = None
+
+    if period:
+        period = period.lower()
+        if period == "last_week":
+            start_date = today - pd.Timedelta(days=7)
+            end_date = today - pd.Timedelta(days=1)
+        elif period == "this_week":
+            start_date = today - pd.Timedelta(days=today.weekday())  # Monday
+            end_date = today
+        elif period == "last_month":
+            first_day_last_month = (today.replace(day=1) - pd.Timedelta(days=1)).replace(day=1)
+            last_day_last_month = today.replace(day=1) - pd.Timedelta(days=1)
+            start_date = first_day_last_month
+            end_date = last_day_last_month
+        else:
+            # Try parsing as month name
+            try:
+                month_num = list(calendar.month_name).index(period.capitalize())
+                start_date = pd.Timestamp(year=today.year, month=month_num, day=1)
+                last_day = calendar.monthrange(today.year, month_num)[1]
+                end_date = pd.Timestamp(year=today.year, month=month_num, day=last_day)
+            except ValueError:
+                return {"error": f"Cannot parse period '{period}'."}
+    
+    # If no period given, forecast next 7 days
+    return forecast_item(item_ids, start_date=start_date, end_date=end_date)
+
 
 
 @mcp.tool
@@ -361,15 +434,6 @@ def recommend_alternative_product(item_name: str, top_k: int = 3):
     return recommend_alternatives(item_name, top_k)
 
 def process_reorder(item_name: str, reorder_quantity: int = 10):
-    """
-    Core logic for reordering an item:
-    - Resolve inventory ID
-    - Get stock
-    - Send email
-    - Insert log
-    Returns a result dict.
-    """
-
     resolved_list = resolve_inventory_ids(item_name)
     if not resolved_list:
         return {"error": f"Inventory '{item_name}' not found"}
@@ -377,13 +441,32 @@ def process_reorder(item_name: str, reorder_quantity: int = 10):
     iid = resolved_list[0][0]
 
     # Fetch current stock
-    cur.execute("SELECT closing_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
+    cur.execute("SELECT closing_stock, min_stock FROM inventory_master WHERE inventory_id=%s", (iid,))
     row = cur.fetchone()
     current_stock = int(row[0]) if row and row[0] is not None else 0
+    min_stock = int(row[1] or 10)
 
-    # Prepare email
+    # Check for previous reorder
+    cur.execute("""
+        SELECT created_at 
+        FROM reorder_log
+        WHERE inventory_id=%s
+        ORDER BY created_at DESC
+        LIMIT 1
+    """, (iid,))
+    last_log = cur.fetchone()
+
+    send_follow_up = False
+    if last_log:
+        last_sent = last_log[0]
+        # convert date to datetime if needed
+        if isinstance(last_sent, date) and not isinstance(last_sent, datetime):
+            last_sent = datetime.combine(last_sent, datetime.min.time())
+        if datetime.now() - last_sent >= timedelta(days=2) and current_stock < min_stock:
+            send_follow_up = True
+
     recipient = "n.megha82@gmail.com"
-    subject = f"Reorder Alert: {item_name}"
+    subject = f"Reorder Alert: {item_name}" + (" (Follow-up)" if send_follow_up else "")
     body = f"""
     Dear Inventory Manager,
 
@@ -391,18 +474,20 @@ def process_reorder(item_name: str, reorder_quantity: int = 10):
     Current Stock: {current_stock}
     Reorder Quantity: {reorder_quantity}
 
-    This is an automated notification from the Inventory MCP system.
+    {'This is a follow-up reminder.' if send_follow_up else 'This is an automated notification from the Inventory MCP system.'}
     """
 
-    # Send email
     email_status = send_reorder_email(recipient, subject, body)
 
-    # Insert into reorder_log
+    # Update status if follow-up
+    status_to_save = "Follow-up Email Sent" if send_follow_up else email_status
+
+    # Insert new log
     cur.execute("""
         INSERT INTO reorder_log 
         (inventory_id, item_name, reorder_quantity, current_stock, status, email_recipient, email_subject, email_body)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-    """, (iid, item_name, reorder_quantity, current_stock, email_status, recipient, subject, body))
+    """, (iid, item_name, reorder_quantity, current_stock, status_to_save, recipient, subject, body))
     
     conn.commit()
 
@@ -411,11 +496,9 @@ def process_reorder(item_name: str, reorder_quantity: int = 10):
         "Item_Name": item_name,
         "Current_Stock": current_stock,
         "Reorder_Quantity": reorder_quantity,
-        "Email_Status": email_status,
-        "Message": "Reorder logged and email processed"
+        "Email_Status": status_to_save,
+        "Message": "Reorder logged and email processed" + (" (Follow-up)" if send_follow_up else "")
     }
-
-
 # Folder path for receipts
 def send_reorder_email(recipient: str, subject: str, body: str):
     """
@@ -622,6 +705,13 @@ def process_receipts_folder():
             all_results.append({"filename": filename, "delete_error": str(e)})
 
     return {"success": True, "receipts_summary": all_results}
+
+@mcp.tool
+def send_email(item_name: str, reorder_quantity: int = 10):
+    """
+    MCP wrapper: Calls the reorder logic which handles initial and follow-up emails.
+    """
+    return process_reorder(item_name, reorder_quantity)
 
 
 # ----------------------------

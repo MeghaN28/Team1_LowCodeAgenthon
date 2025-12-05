@@ -171,11 +171,39 @@ Add rename/edit options in more UI sections
 
 Overall, the platform provided a strong foundation for building our multi-agent inventory management system. With a few enhancements, it can become even more powerful for future teams.
 Application Screenshots
+Layer
+	Technology
+	Purpose
 
-![Screenshot 1](Screenshot%202025-12-05%20at%2011.39.04 AM.png)
-![Screenshot 2](Screenshot%202025-12-05%20at%2011.39.26 AM.png)
-![Screenshot 3](Screenshot%202025-12-05%20at%2011.39.39 AM.png)
-![Screenshot 4](Screenshot%202025-12-05%20at%2011.39.55 AM.png)
-![Screenshot 5](Screenshot%202025-12-05%20at%2011.40.05 AM.png)
-![Screenshot 6](Screenshot%202025-12-05%20at%2011.40.26 AM.png)
-![Screenshot 7](Screenshot%202025-12-05%20at%2011.40.40 AM.png)
+Frontend
+	React
+	Dashboard, voice interface, human approval UI
+
+Backend
+	Python (Flask / FastAPI) MCP
+	API endpoints, orchestration logic
+
+AI Agents
+	Open AI
+	Forecasting, summarization, query handling
+
+Voice/Video
+	TTS
+	
+
+Data + DB
+	PostGres + Knowledge base
+	Inventory, consumption, and supplier data
+
+Visualization
+	matplotlib / Plotly / React Charts
+	Graphs, stock vs threshold, forecasts
+
+Workflow Orchestration
+	iGentic Platform
+	Multi-agent pipeline control
+
+Version Control
+	GitHub
+	Code management
+

@@ -11,11 +11,7 @@ from datetime import datetime, timedelta
 # PostgreSQL setup
 # ----------------------------
 conn = psycopg2.connect(
-    host="localhost",
-    port="5432",
-    dbname="medical_inventory_db",
-    user="meghanarendrasimha",
-    password="Welcome@123"
+ 
 )
 cur = conn.cursor()
 
