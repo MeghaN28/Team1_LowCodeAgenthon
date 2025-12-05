@@ -103,13 +103,13 @@ Team Task Split & Contributions
 
 MCP Coding (Core Framework) — Megha N
 
-Agent Orchestration Layer — Megha N
+Agent Orchestration Layer — Poornima Vetrivelan
 
 Conversational Agent — Megha N
 
 Background Agent (Real-time DB updates) — Megha N
 
-Semantic Search Agent — Megha N
+Semantic Search — Megha N
 
 Inventory Update Agent — Megha N
 
@@ -134,8 +134,6 @@ Purchase Order Review Page — Nada Feteiha
 Dashboard & Visualizations — Poorrnima Vetrivelan
 
 🔧 Supporting Work
-
-POC on iGentIC — Megha N
 
 GitHub Repository Setup — Megha N
 
@@ -208,4 +206,4 @@ Version Control
 	GitHub
 	Code management
 
-![alt text](<Screenshot 2025-12-05 at 11.39.04 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.40 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.05 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.55 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.39 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.54.44 AM.png>)
+![alt text](Screenshot 2025-12-05 at 11.39.04 AM-1.png) ![alt text](<Screenshot 2025-12-05 at 11.39.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.40 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.26 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.40.05 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.55 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.39.39 AM-1.png>) ![alt text](<Screenshot 2025-12-05 at 11.54.44 AM.png>)
